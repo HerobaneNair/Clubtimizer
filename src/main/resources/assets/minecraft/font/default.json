@@ -1,0 +1,60 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/heart.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE060"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/crystal.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE061"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/axe.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE062"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/mace.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE063"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/nethpot.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE064"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/pot.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE065"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/smp.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE066"]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:font/tiertag/sword.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE067"]
+    }
+  ]
+}
