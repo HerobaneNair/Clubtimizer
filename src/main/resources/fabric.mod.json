@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "clubtimizer",
+  "version": "${version}",
+  "name": "Clubtimizer",
+  "description": "Heros EVIL Optimizer",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/clubtimizer/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "hero.bane.Clubtimizer"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "clubtimizer.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric": "*",
+    "minecraft": ">=1.21.5"
+  }
+}

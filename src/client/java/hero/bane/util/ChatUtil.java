@@ -1,0 +1,95 @@
+package hero.bane.util;
+
+import hero.bane.Clubtimizer;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.text.Text;
+
+import java.util.concurrent.TimeUnit;
+
+import static hero.bane.Clubtimizer.client;
+
+public class ChatUtil {
+    public static final Text PREFIX =
+            Text.literal("[")
+                    .styled(s -> s.withColor(0xAAAAAA)).append(
+            Text.literal("Club")
+                    .styled(s -> s.withColor(0xFFFFFF))).append(
+            Text.literal("timizer")
+                    .styled(s -> s.withColor(0xFF5555))).append(
+            Text.literal("] ")
+                    .styled(s -> s.withColor(0xAAAAAA)));
+
+    private static boolean validClient() {
+        return client != null && client.player != null && client.player.networkHandler != null;
+    }
+
+    public static void delayedSay(String message, int color, long delayMs) {
+        Clubtimizer.executor.schedule(() -> say(message, color), delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static void delayedSay(String message, int color) {
+        delayedSay(message, color, 100);
+    }
+
+    public static void say(String message) {
+        say(message, 0xFFFFFF, true);
+    }
+
+    public static void say(String message, int color) {
+        say(message, color, true);
+    }
+
+    public static void say(String message, int color, boolean prepend) {
+        if (!validClient()) return;
+        ClientPlayerEntity player = client.player;
+        if (prepend) {
+            player.sendMessage(PREFIX.copy().append(Text.literal(message).styled(s -> s.withColor(color))), false);
+        } else {
+            player.sendMessage(Text.literal(message).styled(s -> s.withColor(color)), false);
+        }
+    }
+
+    public static void delayedSay(Text text, long delayMs) {
+        Clubtimizer.executor.schedule(() -> say(text), delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static void delayedSay(Text text) {
+        delayedSay(text, 100);
+    }
+
+    public static void delayedSay(Text text, boolean prepend, long delayMs) {
+        Clubtimizer.executor.schedule(() -> say(text, prepend), delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static void delayedSay(Text text, boolean prepend) {
+        delayedSay(text, prepend, 100);
+    }
+
+    public static void say(Text text) {
+        say(text, true);
+    }
+
+    public static void say(Text text, boolean prepend) {
+        if (!validClient()) return;
+
+        ClientPlayerEntity player = client.player;
+        if (prepend) {
+            player.sendMessage(PREFIX.copy().append(text.copy()), false);
+        } else {
+            player.sendMessage(text.copy(), false);
+        }
+    }
+
+    public static void chat(String message) {
+        if (!validClient()) return;
+        client.player.networkHandler.sendChatMessage(message);
+    }
+
+    public static void delayedChat(String message, long delayMs) {
+        Clubtimizer.executor.schedule(() -> chat(message), delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static void delayedChat(String message) {
+        delayedChat(message, 100);
+    }
+}

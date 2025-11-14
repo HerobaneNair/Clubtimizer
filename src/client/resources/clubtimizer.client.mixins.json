@@ -1,0 +1,31 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "hero.bane.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ChatHudMixin",
+    "ClientPlayerInteractionManagerMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "EntityRenderDispatcherMixin",
+    "HandledScreenMixin",
+    "LivingEntityRendererMixin",
+    "PlayerListEntryMixin",
+    "PlayerListHudMixin",
+    "TextDisplayEntityRendererMixin",
+    "accessor.HandledScreenAccessor",
+    "accessor.InGameHudAccessor",
+    "accessor.PlayerListEntryAccessor",
+    "accessor.PlayerListHudAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "mixins": [
+    "BetterPingDisplayMixin",
+    "ClientConnectionMixin"
+  ]
+}
