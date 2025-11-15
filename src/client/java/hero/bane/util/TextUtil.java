@@ -4,7 +4,6 @@ import hero.bane.Clubtimizer;
 import hero.bane.mixin.accessor.InGameHudAccessor;
 import hero.bane.mixin.accessor.PlayerListHudAccessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.PlayerListHud;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.scoreboard.*;
 import net.minecraft.text.MutableText;
@@ -23,51 +22,41 @@ public class TextUtil {
     public static final Pattern COLOR_PATTERN = Pattern.compile("(?i)§(?:#[0-9A-F]{6}|[0-9A-FK-OR])");
 
     public static List<String> getOrderedTabList(MinecraftClient client) {
-        if (client.inGameHud == null) return Collections.emptyList();
-        PlayerListHud hud = client.inGameHud.getPlayerListHud();
-        List<PlayerListEntry> entries = ((PlayerListHudAccessor) hud).invokeCollectPlayerEntries();
-        int size = entries.size();
-        if (size == 0) return Collections.emptyList();
+        var hud = client.inGameHud;
+        if (hud == null) return Collections.emptyList();
 
-        List<String> lines = new ArrayList<>(size);
+        List<PlayerListEntry> entries = ((PlayerListHudAccessor) hud.getPlayerListHud()).invokeCollectPlayerEntries();
+        if (entries.isEmpty()) return Collections.emptyList();
 
+        List<String> out = new ArrayList<>(entries.size());
         for (PlayerListEntry e : entries) {
-            if (e == null || e.getProfile() == null) continue;
-            Text display = e.getDisplayName();
-            if (display == null) continue;
-
-            String line = toLegacyString(display);
-            if (isBlank(line)) continue;
-
-            lines.add(line);
+            Text d = e.getDisplayName();
+            if (d == null) continue;
+            String s = toLegacyString(d);
+            if (!s.trim().isEmpty()) out.add(s);
         }
-
-        return lines;
-    }
-
-    private static boolean isBlank(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            if (!Character.isWhitespace(s.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        return out;
     }
 
     public static int parseDuelSize(String text) {
-        try {
-            return Integer.parseInt(text.replaceAll("[^0-9]", ""));
-        } catch (NumberFormatException ignored) {
-            return -1;
+        int num = 0;
+        boolean found = false;
+        for (int i = 0, len = text.length(); i < len; i++) {
+            char c = text.charAt(i);
+            if (c >= '0' && c <= '9') {
+                found = true;
+                num = num * 10 + (c - '0');
+            }
         }
+        return found ? num : -1;
     }
 
     public static int countSkulls(List<String> tab) {
         int count = 0;
         for (String line : tab) {
-            String stripped = stripFormatting(line);
-            if (stripped.trim().isEmpty()) break;
-            if (stripped.contains("☠")) count++;
+            String stripped = stripFormatting(line).trim();
+            if (stripped.isEmpty()) break;
+            if (fastContains(stripped, "☠")) count++;
         }
         Clubtimizer.temp1 = count;
         return count;
@@ -119,22 +108,22 @@ public class TextUtil {
     }
 
     public static String toLegacyString(Text text) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(64);
 
         text.visit((style, string) -> {
             if (string.isEmpty()) return Optional.empty();
 
-            TextColor color = style.getColor();
+            var color = style.getColor();
             if (color != null) {
-                String name = color.getName().toLowerCase(Locale.ROOT);
-                if (name.startsWith("#")) {
+                String name = color.getName();
+                if (!name.isEmpty() && name.charAt(0) == '#') {
                     sb.append("§#").append(name.substring(1).toUpperCase(Locale.ROOT));
                 } else {
-                    Formatting formatting = Formatting.byName(name);
-                    if (formatting != null && formatting.isColor()) {
-                        sb.append("§").append(formatting.getCode());
+                    Formatting f = Formatting.byName(name);
+                    if (f != null && f.isColor()) {
+                        sb.append('§').append(f.getCode());
                     } else {
-                        sb.append("§#").append(String.format("%06X", color.getRgb())); //%06X is the next 6 colors
+                        sb.append("§#").append(String.format("%06X", color.getRgb()));
                     }
                 }
             }
@@ -217,15 +206,12 @@ public class TextUtil {
     }
 
     public static boolean containsAny(String text, String... parts) {
-        int tLen = text.length();
         for (String p : parts) {
-            if (p == null) continue;
-            int pLen = p.length();
-            if (pLen == 0 || pLen > tLen) continue;
-            if (fastContains(text, p)) return true;
+            if (p != null && fastContains(text, p)) return true;
         }
         return false;
     }
+
 
     public static int nextRainbowColor() {
         float hue = (rainbowIndex % 360) / 360f;
@@ -268,9 +254,9 @@ public class TextUtil {
         if (pLen == 0) return true;
         if (pLen > tLen) return false;
 
-        if (pLen <= 8) return tinySearch(text, pattern, tLen, pLen);
-
-        return bmhSearch(text, pattern, tLen, pLen);
+        return pLen <= 8
+                ? tinySearch(text, pattern, tLen, pLen)
+                : bmhSearch(text, pattern, tLen, pLen);
     }
 
     private static boolean tinySearch(String t, String p, int tLen, int pLen) {

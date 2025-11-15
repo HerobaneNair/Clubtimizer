@@ -1,6 +1,7 @@
 package hero.bane.state;
 
 import hero.bane.Clubtimizer;
+import hero.bane.auto.FriendList;
 import hero.bane.action.AutoGG;
 import hero.bane.action.AutoHush;
 import hero.bane.auto.Rematch;
@@ -224,5 +225,6 @@ public class MCPVPStateChanger {
         Rematch.triggered = false;
         AutoGG.resetReactionWindowEnd();
         TotemResetter.resetCounter();
+        FriendList.request();
     }
 }

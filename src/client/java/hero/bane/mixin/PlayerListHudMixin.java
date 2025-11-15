@@ -13,8 +13,6 @@ import net.minecraft.client.gui.hud.PlayerListHud;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +23,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
-import java.util.Optional;
 
 @Mixin(PlayerListHud.class)
 public abstract class PlayerListHudMixin {
@@ -34,14 +31,11 @@ public abstract class PlayerListHudMixin {
     protected abstract List<PlayerListEntry> collectPlayerEntries();
 
     @Unique
-    private static final ThreadLocal<StringBuilder> BUF = ThreadLocal.withInitial(() -> new StringBuilder(64));
-
-    @Unique
     private static boolean club$shouldApply() {
         var e = MinecraftClient.getInstance().getCurrentServerEntry();
         if (e == null) return true;
         String addr = e.address;
-        return addr == null || !TextUtil.fastContains(addr,"mcpvp.club");
+        return addr == null || !TextUtil.fastContains(addr, "mcpvp.club");
     }
 
     @Unique
@@ -51,27 +45,19 @@ public abstract class PlayerListHudMixin {
     }
 
     @Unique
-    private static boolean club$isDigit(char c) {
-        return c >= '0' && c <= '9';
-    }
-
-    @Unique
     private static String club$removeMs(String s) {
+        if (!TextUtil.fastContains(s, "ms")) return s;
         int idx = s.indexOf("ms");
         if (idx < 0) return s;
 
         int start = idx - 1;
-        while (start >= 0 && club$isDigit(s.charAt(start))) start--;
+        while (start >= 0 && Character.isDigit(s.charAt(start))) start--;
         start++;
 
         int after = idx + 2;
 
-        if (start == 0) {
-            if (after >= s.length()) return "";
-            return s.substring(after).trim();
-        }
-
         if (after >= s.length()) return s.substring(0, start).trim();
+        if (start == 0) return s.substring(after).trim();
 
         return (s.substring(0, start) + s.substring(after)).trim();
     }
@@ -80,41 +66,23 @@ public abstract class PlayerListHudMixin {
     private void club$fixTabNames(DrawContext ctx, int scaledWindowWidth, Scoreboard scoreboard, @Nullable ScoreboardObjective objective, CallbackInfo ci) {
         if (club$shouldApply() || !club$goodState()) return;
 
-        final List<PlayerListEntry> list = this.collectPlayerEntries();
+        List<PlayerListEntry> list = this.collectPlayerEntries();
 
         for (PlayerListEntry entry : list) {
             Text disp = entry.getDisplayName();
             if (disp == null) continue;
 
-            final String raw = disp.getString();
-
-            int spaces = 0;
-            for (int i = 0, len = raw.length(); i < len; i++) {
-                if (raw.charAt(i) == ' ' && ++spaces > 2) break;
-            }
-            if (spaces != 2) continue;
+            String raw = disp.getString();
+            if (!TextUtil.fastContains(raw, "ms")) continue;
 
             int ping = PingUtil.parsePing(raw);
             if (ping < 0) continue;
 
             ((PlayerListEntryAccessor) entry).setLatency(ping);
 
-            final MutableText rebuilt = Text.empty();
-            final StringBuilder sb = BUF.get();
-            sb.setLength(0);
-
-            disp.visit((style, data) -> {
-                if (data == null || data.isEmpty()) return Optional.empty();
-
-                String trimmed = club$removeMs(data);
-                if (!trimmed.isEmpty()) {
-                    rebuilt.append(Text.literal(trimmed).setStyle(style));
-                }
-
-                return Optional.empty();
-            }, Style.EMPTY);
-
-            entry.setDisplayName(rebuilt);
+            String legacy = TextUtil.toLegacyString(disp);
+            legacy = club$removeMs(legacy);
+            entry.setDisplayName(TextUtil.fromLegacy(legacy));
         }
     }
 

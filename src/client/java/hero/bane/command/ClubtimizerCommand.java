@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import hero.bane.Clubtimizer;
+import hero.bane.auto.FriendList;
 import hero.bane.auto.Requeue;
 import hero.bane.config.ClubtimizerConfig;
 import hero.bane.state.MCPVPState;
@@ -67,6 +68,11 @@ public class ClubtimizerCommand {
                     if (Clubtimizer.player == null || Clubtimizer.client.world == null) return 0;
                     MCPVPState state = MCPVPStateChanger.get();
                     say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
+
+                    List<String> names = FriendList.cached;
+                    for(String name : names) {
+                        say(TextUtil.rainbowGradient(name));
+                    }
                     return 1;
                 });
     }
