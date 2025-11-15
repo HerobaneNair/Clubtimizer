@@ -12,15 +12,15 @@ public class ChatUtil {
     public static final Text PREFIX =
             Text.literal("[")
                     .styled(s -> s.withColor(0xAAAAAA)).append(
-            Text.literal("Club")
-                    .styled(s -> s.withColor(0xFFFFFF))).append(
-            Text.literal("timizer")
-                    .styled(s -> s.withColor(0xFF5555))).append(
-            Text.literal("] ")
-                    .styled(s -> s.withColor(0xAAAAAA)));
+                            Text.literal("Club")
+                                    .styled(s -> s.withColor(0xFFFFFF))).append(
+                            Text.literal("timizer")
+                                    .styled(s -> s.withColor(0xFF5555))).append(
+                            Text.literal("] ")
+                                    .styled(s -> s.withColor(0xAAAAAA)));
 
-    private static boolean validClient() {
-        return client != null && client.player != null && client.player.networkHandler != null;
+    private static boolean invalidClient() {
+        return client == null || client.player == null || client.player.networkHandler == null;
     }
 
     public static void delayedSay(String message, int color, long delayMs) {
@@ -40,7 +40,7 @@ public class ChatUtil {
     }
 
     public static void say(String message, int color, boolean prepend) {
-        if (!validClient()) return;
+        if (invalidClient()) return;
         ClientPlayerEntity player = client.player;
         if (prepend) {
             player.sendMessage(PREFIX.copy().append(Text.literal(message).styled(s -> s.withColor(color))), false);
@@ -70,7 +70,7 @@ public class ChatUtil {
     }
 
     public static void say(Text text, boolean prepend) {
-        if (!validClient()) return;
+        if (invalidClient()) return;
 
         ClientPlayerEntity player = client.player;
         if (prepend) {
@@ -81,7 +81,7 @@ public class ChatUtil {
     }
 
     public static void chat(String message) {
-        if (!validClient()) return;
+        if (invalidClient()) return;
         client.player.networkHandler.sendChatMessage(message);
     }
 

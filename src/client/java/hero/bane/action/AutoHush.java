@@ -13,48 +13,43 @@ public class AutoHush {
     public static boolean matchJoin = true;
     public static boolean allowLobbyJoin = false;
 
-
     public static Text replaceMessage(Text msg) {
         var cfg = ClubtimizerConfig.getAutoHush();
         if (!cfg.enabled || !MCPVPStateChanger.inGame()) return msg;
-        if (Clubtimizer.player != null) {
-            double x = Clubtimizer.player.getX();
-            double z = Clubtimizer.player.getZ();
-            if (x >= -300 && x <= 300 && z >= -300 && z <= 300) {
-                return msg;
-            }
+
+        var player = Clubtimizer.player;
+        if (player != null) {
+            double x = player.getX(), z = player.getZ();
+            if (x >= -300 && x <= 300 && z >= -300 && z <= 300) return msg;
         }
 
         String legacy = TextUtil.toLegacyString(msg);
-        if (!legacy.contains("»")) return msg;
-
         int arrowIndex = legacy.indexOf('»');
-        String beforeArrow = legacy.substring(0, arrowIndex);
-        String afterArrow = legacy.substring(arrowIndex + 1).strip();
-        if (beforeArrow.contains(Clubtimizer.playerName)) return msg;
+        if (arrowIndex < 0) return msg;
 
-        String realNamePart = beforeArrow.chars().dropWhile(c -> !Character.isLetter(c)).collect(
-                StringBuilder::new,
-                StringBuilder::appendCodePoint,
-                StringBuilder::append
-        ).toString().strip();
+        String beforeArrow = legacy.substring(0, arrowIndex);
+        if (TextUtil.fastContains(beforeArrow,Clubtimizer.playerName)) return msg;
+
+        String afterArrow = legacy.substring(arrowIndex + 1).strip();
+
+        String realNamePart = beforeArrow.chars()
+                .dropWhile(c -> !Character.isLetter(c))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString()
+                .strip();
 
         if (realNamePart.equalsIgnoreCase(Clubtimizer.playerName)) return msg;
 
         String lower = legacy.toLowerCase();
 
-        if (lower.contains("§#7a7a7a »")) {
+        if (TextUtil.fastContains(lower,"§#7a7a7a »")) {
             return buildHidden(beforeArrow, afterArrow, false);
         }
 
-        if (lower.contains("§#1fa5ff »")) {
+        if (TextUtil.fastContains(lower,"§#1fa5ff »")) {
             String cleaned = TextUtil.stripFormatting(afterArrow).trim().toLowerCase();
             boolean isTrigger = AutoGG.isTrigger(cleaned) || cleaned.equals("ss");
-
-            if (cfg.allowSS && isTrigger) {
-                return msg;
-            }
-
+            if (cfg.allowSS && isTrigger) return msg;
             return buildHidden(beforeArrow, afterArrow, true);
         }
 
@@ -63,11 +58,12 @@ public class AutoHush {
 
     private static Text buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
         String prefix = playerChat ? beforeArrow + "§#1FA5FF» " : beforeArrow + "§#7A7A7A» ";
-
         MutableText base = (MutableText) TextUtil.fromLegacy(prefix);
 
         String hoverText = TextUtil.stripFormatting(afterArrow).trim();
-        MutableText hiddenPart = (MutableText) TextUtil.fromLegacy((playerChat ? "§7§m" : "§8§m") + " ".repeat(afterArrow.length()));
+        int len = afterArrow.length();
+        String maskColor = playerChat ? "§7§m" : "§8§m";
+        MutableText hiddenPart = (MutableText) TextUtil.fromLegacy(maskColor + " ".repeat(len));
 
         if (!hoverText.isEmpty()) {
             hiddenPart.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Text.literal(hoverText))));

@@ -26,14 +26,14 @@ public abstract class ChatHudMixin {
     private void club$chatCanceller(Text message, MessageSignatureData signatureData, MessageIndicator indicator, CallbackInfo ci) {
         if (MCPVPStateChanger.inLobby() && ClubtimizerConfig.getLobby().hideChat) {
             String noFormatting = message.getString();
-            if(noFormatting.contains("»") && !noFormatting.contains(Clubtimizer.playerName)) {
+            if(TextUtil.fastContains(noFormatting,"»") && !TextUtil.fastContains(noFormatting,Clubtimizer.playerName)) {
                 ci.cancel();
             }
         }
         if (
                 (MCPVPStateChanger.inGame() || MCPVPStateChanger.get().equals(MCPVPState.SPECTATING)) &&
                         ClubtimizerConfig.getAutoHush().specChat) {
-            if (TextUtil.toLegacyString(message).contains("§#7a7a7a »")) {
+            if (TextUtil.fastContains(TextUtil.toLegacyString(message),"§#7a7a7a »")) {
                 ci.cancel();
             }
         }

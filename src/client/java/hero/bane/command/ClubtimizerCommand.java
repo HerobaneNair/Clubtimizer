@@ -42,43 +42,23 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildLobby() {
-        return ClientCommandManager.literal("lobby")
-                .then(ClientCommandManager.literal("hideplayers")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getLobby().hidePlayers,
-                                ClubtimizerConfig::setLobbyHidePlayers,
-                                "Hide Players in lobby"))
-                        .then(ClientCommandManager.literal("on")
-                                .executes(ctx -> setToggle(true,
-                                        ClubtimizerConfig::setLobbyHidePlayers,
-                                        "Hide Players in lobby")))
-                        .then(ClientCommandManager.literal("off")
-                                .executes(ctx -> setToggle(false,
-                                        ClubtimizerConfig::setLobbyHidePlayers,
-                                        "Hide Players in lobby"))))
-                .then(ClientCommandManager.literal("hitbox")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getLobby().hitboxes,
-                                ClubtimizerConfig::setLobbyHitboxes,
-                                "Turn on hitboxes when connecting"))
-                        .then(ClientCommandManager.literal("on")
-                                .executes(ctx -> setToggle(true,
-                                        ClubtimizerConfig::setLobbyHitboxes,
-                                        "Turn on hitboxes when connecting")))
-                        .then(ClientCommandManager.literal("off")
-                                .executes(ctx -> setToggle(false,
-                                        ClubtimizerConfig::setLobbyHitboxes,
-                                        "Turn on hitboxes when connecting"))))
-                .then(ClientCommandManager.literal("hidechat")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getLobby().hideChat,
-                                ClubtimizerConfig::setLobbyHideChat,
-                                "Hide Chat in lobby"))
-                        .then(ClientCommandManager.literal("on")
-                                .executes(ctx -> setToggle(true,
-                                        ClubtimizerConfig::setLobbyHideChat,
-                                        "Hide Chat in lobby")))
-                        .then(ClientCommandManager.literal("off")
-                                .executes(ctx -> setToggle(false,
-                                        ClubtimizerConfig::setLobbyHideChat,
-                                        "Hide Chat in lobby"))));
+        return literalToggleGroup(
+                new String[][]{
+                        {"hideplayers", "Hide Players in lobby"},
+                        {"hitbox", "Turn on hitboxes when connecting"},
+                        {"hidechat", "Hide Chat in lobby"}
+                },
+                List.of(
+                        ClubtimizerConfig::setLobbyHidePlayers,
+                        ClubtimizerConfig::setLobbyHitboxes,
+                        ClubtimizerConfig::setLobbyHideChat
+                ),
+                List.of(
+                        () -> ClubtimizerConfig.getLobby().hidePlayers,
+                        () -> ClubtimizerConfig.getLobby().hitboxes,
+                        () -> ClubtimizerConfig.getLobby().hideChat
+                )
+        );
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
@@ -93,23 +73,21 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildConfig() {
         return ClientCommandManager.literal("config")
-                .then(ClientCommandManager.literal("open")
-                        .executes(ctx -> {
-                            var file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "clubtimizer.json");
-                            try {
-                                Util.getOperatingSystem().open(file);
-                                say("Opened config file", 0x55FFFF);
-                            } catch (Exception e) {
-                                say("Failed to open config file: " + e.getMessage(), 0xFF5555);
-                            }
-                            return 1;
-                        }))
-                .then(ClientCommandManager.literal("save")
-                        .executes(ctx -> {
-                            hero.bane.config.ClubtimizerConfig.save();
-                            say("Config saved", 0x55FFFF);
-                            return 1;
-                        }));
+                .then(ClientCommandManager.literal("open").executes(ctx -> {
+                    File f = new File(FabricLoader.getInstance().getConfigDir().toFile(), "clubtimizer.json");
+                    try {
+                        Util.getOperatingSystem().open(f);
+                        say("Opened config file", 0x55FFFF);
+                    } catch (Exception e) {
+                        say("Failed to open config: " + e.getMessage(), 0xFF5555);
+                    }
+                    return 1;
+                }))
+                .then(ClientCommandManager.literal("save").executes(ctx -> {
+                    ClubtimizerConfig.save();
+                    say("Config saved", 0x55FFFF);
+                    return 1;
+                }));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildRequeue() {
@@ -120,36 +98,46 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoHush() {
-        return ClientCommandManager.literal("autohush")
-                .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoHush().enabled, ClubtimizerConfig::setAutoHushEnabled, "AutoHush"))
-                .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoHushEnabled, "AutoHush")))
-                .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoHushEnabled, "AutoHush")))
-                .then(ClientCommandManager.literal("ss")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoHush().allowSS, ClubtimizerConfig::setAutoHushSS, "SS messages"))
-                        .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoHushSpecChat, "SS messages")))
-                        .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoHushSS, "SS messages"))))
-                .then(ClientCommandManager.literal("specChat")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoHush().specChat, ClubtimizerConfig::setAutoHushSpecChat, "Spectator messages"))
-                        .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoHushSpecChat, "Spectator messages")))
-                        .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoHushSpecChat, "Spectator messages"))))
+        return literalToggleGroupRoot(
+                "autohush",
+                () -> ClubtimizerConfig.getAutoHush().enabled,
+                ClubtimizerConfig::setAutoHushEnabled,
+                "AutoHush")
+                .then(toggleSub(
+                        "ss",
+                        () -> ClubtimizerConfig.getAutoHush().allowSS,
+                        ClubtimizerConfig::setAutoHushSS,
+                        "SS messages"
+                ))
+                .then(toggleSub(
+                        "specChat",
+                        () -> ClubtimizerConfig.getAutoHush().specChat,
+                        ClubtimizerConfig::setAutoHushSpecChat,
+                        "Spectator messages"
+                ))
                 .then(ClientCommandManager.literal("setmsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
                                 .executes(ClubtimizerCommand::executeSetAutoHushMessage)));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoGG() {
-        return ClientCommandManager.literal("autogg")
-                .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoGG().enabled, ClubtimizerConfig::setAutoGGEnabled, "AutoGG"))
-                .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoGGEnabled, "AutoGG")))
-                .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoGGEnabled, "AutoGG")))
-                .then(ClientCommandManager.literal("round")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoGG().roundEnabled, ClubtimizerConfig::setAutoGGRound, "AutoGG Round mode"))
-                        .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoGGRound, "AutoGG Round mode")))
-                        .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoGGRound, "AutoGG Round mode"))))
-                .then(ClientCommandManager.literal("reaction")
-                        .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoGG().reactionary, ClubtimizerConfig::setAutoGGReactionary, "Reactionary mode"))
-                        .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoGGReactionary, "Reactionary mode")))
-                        .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoGGReactionary, "Reactionary mode"))))
+        return literalToggleGroupRoot(
+                "autogg",
+                () -> ClubtimizerConfig.getAutoGG().enabled,
+                ClubtimizerConfig::setAutoGGEnabled,
+                "AutoGG")
+                .then(toggleSub(
+                        "round",
+                        () -> ClubtimizerConfig.getAutoGG().roundEnabled,
+                        ClubtimizerConfig::setAutoGGRound,
+                        "AutoGG Round mode"
+                ))
+                .then(toggleSub(
+                        "reaction",
+                        () -> ClubtimizerConfig.getAutoGG().reactionary,
+                        ClubtimizerConfig::setAutoGGReactionary,
+                        "Reactionary mode"
+                ))
                 .then(ClientCommandManager.literal("setmsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
                                 .executes(ClubtimizerCommand::executeSetGGMessage)))
@@ -166,10 +154,11 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoCope() {
-        return ClientCommandManager.literal("autocope")
-                .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoCope().enabled, ClubtimizerConfig::setAutoCopeEnabled, "AutoCope"))
-                .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoCopeEnabled, "AutoCope")))
-                .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoCopeEnabled, "AutoCope")))
+        return literalToggleGroupRoot(
+                "autocope",
+                () -> ClubtimizerConfig.getAutoCope().enabled,
+                ClubtimizerConfig::setAutoCopeEnabled,
+                "AutoCope")
                 .then(ClientCommandManager.literal("add")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
                                 .executes(ClubtimizerCommand::executeAddCopePhrase)))
@@ -179,10 +168,11 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoResponse() {
-        return ClientCommandManager.literal("autoresponse")
-                .executes(ctx -> toggle(() -> ClubtimizerConfig.getAutoResponse().enabled, ClubtimizerConfig::setAutoResponseEnabled, "AutoResponse"))
-                .then(ClientCommandManager.literal("on").executes(ctx -> setToggle(true, ClubtimizerConfig::setAutoResponseEnabled, "AutoResponse")))
-                .then(ClientCommandManager.literal("off").executes(ctx -> setToggle(false, ClubtimizerConfig::setAutoResponseEnabled, "AutoResponse")))
+        return literalToggleGroupRoot(
+                "autoresponse",
+                () -> ClubtimizerConfig.getAutoResponse().enabled,
+                ClubtimizerConfig::setAutoResponseEnabled,
+                "AutoResponse")
                 .then(ClientCommandManager.literal("add")
                         .then(ClientCommandManager.argument("triggers", StringArgumentType.greedyString())
                                 .then(ClientCommandManager.argument("responses", StringArgumentType.greedyString())
@@ -195,6 +185,41 @@ public class ClubtimizerCommand {
                                     return b.buildFuture();
                                 })
                                 .executes(ClubtimizerCommand::executeRemoveAutoResponseRule)));
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> literalToggleGroup(
+            String[][] keys,
+            List<Consumer<Boolean>> setters,
+            List<Supplier<Boolean>> getters) {
+
+        LiteralArgumentBuilder<FabricClientCommandSource> base = ClientCommandManager.literal("lobby");
+
+        for (int i = 0; i < keys.length; i++) {
+            base.then(toggleSub(keys[i][0], getters.get(i), setters.get(i), keys[i][1]));
+        }
+        return base;
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> literalToggleGroupRoot(
+            String root, Supplier<Boolean> getter, Consumer<Boolean> setter, String label) {
+
+        return ClientCommandManager.literal(root)
+                .executes(ctx -> toggle(getter, setter, label))
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx -> setToggle(true, setter, label)))
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx -> setToggle(false, setter, label)));
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> toggleSub(
+            String sub, Supplier<Boolean> getter, Consumer<Boolean> setter, String label) {
+
+        return ClientCommandManager.literal(sub)
+                .executes(ctx -> toggle(getter, setter, label))
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx -> setToggle(true, setter, label)))
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx -> setToggle(false, setter, label)));
     }
 
     private static int toggle(Supplier<Boolean> getter, Consumer<Boolean> setter, String label) {
@@ -220,15 +245,13 @@ public class ClubtimizerCommand {
     }
 
     private static int executeSetAutoHushMessage(CommandContext<FabricClientCommandSource> ctx) {
-        String msg = StringArgumentType.getString(ctx, "msg");
-        ClubtimizerConfig.setAutoHushMessage(msg);
+        ClubtimizerConfig.setAutoHushMessage(StringArgumentType.getString(ctx, "msg"));
         say("AutoHush message updated", 0x55FFFF);
         return 1;
     }
 
     private static int executeSetGGMessage(CommandContext<FabricClientCommandSource> ctx) {
-        String msg = StringArgumentType.getString(ctx, "msg");
-        ClubtimizerConfig.setAutoGGMessage(msg);
+        ClubtimizerConfig.setAutoGGMessage(StringArgumentType.getString(ctx, "msg"));
         say("GG message updated", 0x55FFFF);
         return 1;
     }
@@ -262,10 +285,8 @@ public class ClubtimizerCommand {
     }
 
     private static int executeAddAutoResponseRule(CommandContext<FabricClientCommandSource> ctx) {
-        String triggerArg = StringArgumentType.getString(ctx, "triggers");
-        String responseArg = StringArgumentType.getString(ctx, "responses");
-        List<String> triggers = List.of(triggerArg.split("[,;]"));
-        List<String> responses = List.of(responseArg.split("[,;]"));
+        List<String> triggers = List.of(StringArgumentType.getString(ctx, "triggers").split("[,;]"));
+        List<String> responses = List.of(StringArgumentType.getString(ctx, "responses").split("[,;]"));
         ClubtimizerConfig.addAutoResponseRule(triggers, responses);
         say("Added AutoResponse rule: " + triggers + " → " + responses, 0x55FFFF);
         return 1;

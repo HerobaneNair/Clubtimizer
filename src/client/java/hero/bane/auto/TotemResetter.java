@@ -1,8 +1,8 @@
 package hero.bane.auto;
 
 import hero.bane.state.MCPVPStateChanger;
+import hero.bane.util.TextUtil;
 import net.fabricmc.loader.api.FabricLoader;
-
 import java.lang.reflect.Method;
 
 public class TotemResetter {
@@ -27,25 +27,29 @@ public class TotemResetter {
     }
 
     public static void handleMessage(String text) {
-        if (!reflectionEnabled) return;
-        if (!MCPVPStateChanger.inGame()) return;
-        if (System.currentTimeMillis() < reactionWindowEnd) return;
-        boolean messageWorks = text.contains("⚔ Match Complete") ||
-                (text.contains("won the round") && !text.contains("»"));
-        if (!messageWorks) return;
-        invokeReset();
+        if (!reflectionEnabled || !MCPVPStateChanger.inGame()) return;
+
+        long now = System.currentTimeMillis();
+        if (now < reactionWindowEnd) return;
+
+        boolean match =
+                TextUtil.fastContains(text,"⚔ Match Complete") ||
+                        (TextUtil.fastContains(text,"won the round") && !TextUtil.fastContains(text,"»"));
+
+        if (match) invokeReset(now);
     }
 
     public static void resetCounter() {
         if (!reflectionEnabled) return;
-        if (System.currentTimeMillis() < reactionWindowEnd) return;
-        invokeReset();
+        long now = System.currentTimeMillis();
+        if (now < reactionWindowEnd) return;
+        invokeReset(now);
     }
 
-    private static void invokeReset() {
+    private static void invokeReset(long now) {
         try {
             resetMethod.invoke(null);
         } catch (Throwable ignored) {}
-        reactionWindowEnd = System.currentTimeMillis() + 2000L;
+        reactionWindowEnd = now + 2000L;
     }
 }

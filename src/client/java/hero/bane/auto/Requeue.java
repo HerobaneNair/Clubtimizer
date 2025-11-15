@@ -29,19 +29,15 @@ import java.util.List;
 import static hero.bane.util.ChatUtil.say;
 
 public final class Requeue {
-
     private static final int TICK_BUFFER = 2;
     private static final int LEAVE_COOLDOWN_TICKS = 20;
     private static final String MENU_KEYWORD = "Queue Duels";
-
     public static final int[] SLOTS = {10, 11, 12, 13, 14, 15, 16, 22};
     public static final String[] GAMEMODES = {"Sword", "Axe", "Mace", "UHC", "Neth OP", "Pot", "SMP", "Vanilla"};
 
-    private enum State {
-        IDLE, WAITING, CLICKING
-    }
-
+    private enum State {IDLE, WAITING, CLICKING}
     private static State state = State.IDLE;
+
     private static long nextActionTick = 0;
     private static long lastLeaveTick = -LEAVE_COOLDOWN_TICKS;
     private static int delayTicks = 1;
@@ -62,13 +58,12 @@ public final class Requeue {
     private static final MutableText qPrefix = Text.literal("Queued into:").styled(s -> s.withColor(0x55FFFF));
 
     public static void handleTick(MinecraftClient client) {
-        if (client == null) return;
         var player = client.player;
         var world = client.world;
         if (player == null || world == null) return;
 
-        final long tick = world.getTime();
-        final boolean attackPressed = client.options.attackKey.isPressed();
+        long tick = world.getTime();
+        boolean attackPressed = client.options.attackKey.isPressed();
         if (!attackPressed) attackHeldGuard = false;
 
         switch (state) {
@@ -83,35 +78,34 @@ public final class Requeue {
         if (!isClickingUnbreakableIronSwordInSlot0(client)) return;
 
         attackHeldGuard = true;
-        final MCPVPState pvpState = MCPVPStateChanger.get();
+        MCPVPState pvpState = MCPVPStateChanger.get();
 
         if (pvpState == MCPVPState.LOBBY) {
             rightClickSword(client);
             delayTicks = Math.max(1, TextUtil.getDynamicDelay(client, TICK_BUFFER));
             nextActionTick = tick + (long) delayTicks * 2;
             state = State.WAITING;
-        } else if (pvpState == MCPVPState.IN_QUEUE) {
-            if (tick - lastLeaveTick >= LEAVE_COOLDOWN_TICKS) {
-                if (client.player != null && client.player.networkHandler != null) {
-                    client.player.networkHandler.sendChatCommand("leave");
-                    lastLeaveTick = tick;
-                }
+        } else if (pvpState == MCPVPState.IN_QUEUE && tick - lastLeaveTick >= LEAVE_COOLDOWN_TICKS) {
+            assert client.player != null;
+            var net = client.player.networkHandler;
+            if (net != null) {
+                net.sendChatCommand("leave");
+                lastLeaveTick = tick;
             }
         }
     }
 
     private static void onAwaitingMenu(MinecraftClient client, long tick) {
-        final HandledScreen<?> hs = getHandledNonInventoryScreen(client);
+        HandledScreen<?> hs = getHandledNonInventoryScreen(client);
         if (hs != null) {
-            final String title = safeTitle(hs);
-            if (title.contains(MENU_KEYWORD)) {
+            String title = safeTitle(hs);
+            if (TextUtil.fastContains(title,MENU_KEYWORD)) {
                 expectedMenuTitle = title;
                 initClickSequence();
                 state = State.CLICKING;
                 return;
             }
         }
-
         if (tick >= nextActionTick) {
             Clubtimizer.LOGGER.info("Timeout waiting for inventory ({} ticks).", delayTicks * 2);
             state = State.IDLE;
@@ -120,54 +114,47 @@ public final class Requeue {
 
     private static void onClicking(MinecraftClient client, long tick) {
         if (tick < nextActionTick) return;
-
-        final HandledScreen<?> hs = getHandledNonInventoryScreen(client);
+        HandledScreen<?> hs = getHandledNonInventoryScreen(client);
         if (hs == null) {
             state = State.IDLE;
             return;
         }
-
-        final String title = safeTitle(hs);
+        String title = safeTitle(hs);
         if (!title.equals(expectedMenuTitle)) {
             Clubtimizer.LOGGER.warn("Stopped clicking - unexpected title '{}'.", title);
             state = State.IDLE;
             return;
         }
-
         if (targetSlots.isEmpty()) {
             state = State.IDLE;
             return;
         }
-
-        final int syncId = hs.getScreenHandler().syncId;
-        final Integer slot = targetSlots.pollFirst();
-        final String name = (targetNames.isEmpty() ? ("Slot " + slot) : targetNames.pollFirst());
-
+        int syncId = hs.getScreenHandler().syncId;
+        Integer slot = targetSlots.pollFirst();
+        String name = targetNames.isEmpty() ? ("Slot " + slot) : targetNames.pollFirst();
         if (slot != null) {
             clickSlot(client, syncId, slot);
-            say(
-                    qPrefix.copy().append(TextUtil.rainbowGradient(" " + name))
-            );
+            say(qPrefix.copy().append(TextUtil.rainbowGradient(" " + name)));
         }
-
         nextActionTick = tick + (long) delayTicks;
     }
 
     private static boolean isClickingUnbreakableIronSwordInSlot0(MinecraftClient client) {
-        if (client.player == null) return false;
-        if (isInsideCylinder(client.player)) return false;
+        var player = client.player;
+        if (player == null) return false;
+        if (isInsideCylinder(player)) return false;
         if (!client.options.attackKey.isPressed()) return false;
-        if (client.player.getInventory().getSelectedSlot() != 0) return false;
-
-        final ItemStack stack = client.player.getMainHandStack();
-        if (stack.isEmpty() || stack.getItem() != Items.IRON_SWORD) return false;
-        return stack.contains(DataComponentTypes.UNBREAKABLE);
+        if (player.getInventory().getSelectedSlot() != 0) return false;
+        ItemStack stack = player.getMainHandStack();
+        return !stack.isEmpty() && stack.getItem() == Items.IRON_SWORD && stack.contains(DataComponentTypes.UNBREAKABLE);
     }
 
     private static void rightClickSword(MinecraftClient client) {
-        if (client.player == null || client.interactionManager == null) return;
-        client.player.getInventory().setSelectedSlot(0);
-        client.interactionManager.interactItem(client.player, Hand.MAIN_HAND);
+        var player = client.player;
+        var im = client.interactionManager;
+        if (player == null || im == null) return;
+        player.getInventory().setSelectedSlot(0);
+        im.interactItem(player, Hand.MAIN_HAND);
     }
 
     private static HandledScreen<?> getHandledNonInventoryScreen(MinecraftClient client) {
@@ -176,13 +163,15 @@ public final class Requeue {
     }
 
     private static String safeTitle(HandledScreen<?> hs) {
-        final Text t = hs.getTitle();
-        return (t == null) ? "" : t.getString();
+        Text t = hs.getTitle();
+        return t == null ? "" : t.getString();
     }
 
     private static void clickSlot(MinecraftClient client, int syncId, int slot) {
-        if (client.interactionManager == null || client.player == null) return;
-        client.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.QUICK_MOVE, client.player);
+        var im = client.interactionManager;
+        var player = client.player;
+        if (im == null || player == null) return;
+        im.clickSlot(syncId, slot, 0, SlotActionType.QUICK_MOVE, player);
     }
 
     private static void initClickSequence() {
@@ -196,7 +185,7 @@ public final class Requeue {
     }
 
     private static void parseOrderFromConfigIfNeeded() {
-        final String order = ClubtimizerConfig.getRequeueOrder();
+        String order = ClubtimizerConfig.getRequeueOrder();
         if (order != null && order.equals(cachedOrder)) return;
 
         if (order == null || order.isEmpty()) {
@@ -209,9 +198,9 @@ public final class Requeue {
         slotBuf.clear();
         modeBuf.clear();
 
-        for (int i = 0; i < order.length(); i++) {
-            char c = order.charAt(i);
-            int idx = c - '1';
+        int len = order.length();
+        for (int i = 0; i < len; i++) {
+            int idx = order.charAt(i) - '1';
             if (idx >= 0 && idx < SLOTS.length) {
                 slotBuf.add(SLOTS[idx]);
                 modeBuf.add(GAMEMODES[idx]);
@@ -236,8 +225,9 @@ public final class Requeue {
             return 0;
         }
         StringBuilder summary = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            int index = Character.getNumericValue(input.charAt(i)) - 1;
+        int len = input.length();
+        for (int i = 0; i < len; i++) {
+            int index = input.charAt(i) - '1';
             summary.append(GAMEMODES[index]).append("\n");
         }
         ClubtimizerConfig.setRequeueOrder(input);
@@ -250,7 +240,8 @@ public final class Requeue {
         int n = GAMEMODES.length;
         if (input.isEmpty() || input.length() > n) return false;
         boolean[] seen = new boolean[n];
-        for (int i = 0; i < input.length(); i++) {
+        int len = input.length();
+        for (int i = 0; i < len; i++) {
             char c = input.charAt(i);
             if (c < '1' || c > (char) ('0' + n)) return false;
             int idx = c - '1';
@@ -264,7 +255,6 @@ public final class Requeue {
         double px = p.getX() - 0.5;
         double pz = p.getZ() - 63.5;
         double py = p.getY();
-
-        return (px * px + pz * pz <= 19 * 19) && (py >= 99 && py <= 125);
+        return (px * px + pz * pz <= 361) && (py >= 99 && py <= 125);
     }
 }

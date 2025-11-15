@@ -1,6 +1,8 @@
 package hero.bane.mixin;
 
 import hero.bane.mixin.accessor.HandledScreenAccessor;
+import hero.bane.state.MCPVPState;
+import hero.bane.state.MCPVPStateChanger;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
@@ -17,6 +19,7 @@ public abstract class HandledScreenMixin {
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void club$antiBackgroundClicker(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+        if(MCPVPStateChanger.get().equals(MCPVPState.NONE)) return;
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 

@@ -217,9 +217,12 @@ public class TextUtil {
     }
 
     public static boolean containsAny(String text, String... parts) {
-        for (String part : parts) {
-            if (part.isEmpty()) continue;
-            if (text.contains(part)) return true;
+        int tLen = text.length();
+        for (String p : parts) {
+            if (p == null) continue;
+            int pLen = p.length();
+            if (pLen == 0 || pLen > tLen) continue;
+            if (fastContains(text, p)) return true;
         }
         return false;
     }
@@ -258,4 +261,62 @@ public class TextUtil {
         return out;
     }
 
+    public static boolean fastContains(String text, String pattern) {
+        int tLen = text.length();
+        int pLen = pattern.length();
+
+        if (pLen == 0) return true;
+        if (pLen > tLen) return false;
+
+        if (pLen <= 8) return tinySearch(text, pattern, tLen, pLen);
+
+        return bmhSearch(text, pattern, tLen, pLen);
+    }
+
+    private static boolean tinySearch(String t, String p, int tLen, int pLen) {
+        char first = p.charAt(0);
+        int max = tLen - pLen;
+
+        for (int i = 0; i <= max; i++) {
+            if (t.charAt(i) == first) {
+                int j = 1;
+                while (j < pLen && t.charAt(i + j) == p.charAt(j)) {
+                    j++;
+                }
+                if (j == pLen) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean bmhSearch(String text, String pattern, int tLen, int pLen) {
+        int[] skip = buildSkipArray(pattern, pLen);
+
+        int i = 0;
+        int last = pLen - 1;
+
+        while (i <= tLen - pLen) {
+
+            int j = last;
+            while (text.charAt(i + j) == pattern.charAt(j)) {
+                if (j == 0) return true;
+                j--;
+            }
+
+            i += skip[text.charAt(i + last) & 0xFF];
+        }
+        return false;
+    }
+
+    private static int[] buildSkipArray(String pattern, int pLen) {
+        int[] skip = new int[256];
+        int last = pLen - 1;
+
+        Arrays.fill(skip, pLen);
+
+        for (int i = 0; i < last; i++) {
+            skip[pattern.charAt(i) & 0xFF] = last - i;
+        }
+        return skip;
+    }
 }

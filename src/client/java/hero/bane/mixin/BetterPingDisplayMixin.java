@@ -3,6 +3,7 @@ package hero.bane.mixin;
 import com.vladmarica.betterpingdisplay.hud.CustomPlayerListHud;
 import hero.bane.Clubtimizer;
 import hero.bane.util.PingUtil;
+import hero.bane.util.TextUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.PlayerListHud;
@@ -17,7 +18,7 @@ public abstract class BetterPingDisplayMixin {
 
     @Inject(method = "renderPingDisplay", at = @At("HEAD"), cancellable = true)
     private static void club$fixBetterPing(MinecraftClient client, PlayerListHud instance, DrawContext context, int width, int x, int y, PlayerListEntry entry, CallbackInfo ci) {
-        if (Clubtimizer.ip == null || !(Clubtimizer.ip.contains("mcpvp"))) {
+        if (Clubtimizer.ip == null || !(TextUtil.fastContains(Clubtimizer.ip,"mcpvp"))) {
             return;
         }
         int parsedPing = -1;

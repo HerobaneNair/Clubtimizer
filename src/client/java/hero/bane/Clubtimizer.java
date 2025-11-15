@@ -18,51 +18,48 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class Clubtimizer implements ClientModInitializer {
+
     public static final Logger LOGGER = LoggerFactory.getLogger("clubtimizer");
+    public static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     public static String ip = "_";
     public static int temp1 = 0;
-    public static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     public static MinecraftClient client;
     public static ClientPlayerEntity player;
     public static String playerName = "";
 
-
     @Override
     public void onInitializeClient() {
         client = MinecraftClient.getInstance();
-        if(client!=null) {
-            player = client.player;
-            if (player != null) playerName = client.player.getName().getString();
-        }
+        player = client.player;
+        if (player != null) playerName = player.getName().getString();
         ClubtimizerCommand.register();
-
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> updateIp(client));
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ip = "_");
-
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            Requeue.handleTick(client);
-
-            if (client.player != null && client.world != null) {
-                if (MCPVPStateChanger.get()!= MCPVPState.NONE) {
-                    if (client.world.getTime() % 5 == 0) MCPVPStateChanger.update(); //update every 5 ticks
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, c) -> updateIp(c));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, c) -> ip = "_");
+        ClientTickEvents.END_CLIENT_TICK.register(c -> {
+            Requeue.handleTick(c);
+            if (c.player != null && c.world != null) {
+                long t = c.world.getTime();
+                if (MCPVPStateChanger.get() != MCPVPState.NONE) {
+                    if (t % 5 == 0) MCPVPStateChanger.update();
                 } else {
-                    if (client.world.getTime() % 20 == 0) MCPVPStateChanger.update();
+                    if (t % 20 == 0) MCPVPStateChanger.update();
                 }
             }
         });
         TotemResetter.initializeReflection();
     }
 
-    private static void updateIp(MinecraftClient client) {
-        if (client.getCurrentServerEntry() != null) {
-            ip = client.getCurrentServerEntry().address.toLowerCase();
-            player = client.player;
-            if(player!=null) playerName = client.player.getName().getString();
-            if(ip.contains("mcpvp") && ClubtimizerConfig.getLobby().hitboxes) {
+    private static void updateIp(MinecraftClient c) {
+        var entry = c.getCurrentServerEntry();
+        if (entry != null) {
+            ip = entry.address.toLowerCase();
+            player = c.player;
+            if (player != null) playerName = player.getName().getString();
+            if (ip.contains("mcpvp") && ClubtimizerConfig.getLobby().hitboxes) {
                 LOGGER.info("[Clubtimizer] Connected to: {}", ip);
-                client.getEntityRenderDispatcher().setRenderHitboxes(true);
+                c.getEntityRenderDispatcher().setRenderHitboxes(true);
             }
-        } else if (client.isIntegratedServerRunning()) {
+        } else if (c.isIntegratedServerRunning()) {
             ip = "_sp";
         } else {
             ip = "_";

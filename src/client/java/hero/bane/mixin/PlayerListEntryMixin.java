@@ -1,6 +1,7 @@
 package hero.bane.mixin;
 
 import hero.bane.util.PingUtil;
+import hero.bane.util.TextUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
@@ -21,7 +22,7 @@ public abstract class PlayerListEntryMixin {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getCurrentServerEntry() == null) return;
         String address = client.getCurrentServerEntry().address;
-        if (address == null || !address.contains("mcpvp.club")) return;
+        if (address == null || !TextUtil.fastContains(address,"mcpvp.club")) return;
 
         if (this.displayName == null) return;
         int parsed = PingUtil.parsePing(this.displayName.getString());
