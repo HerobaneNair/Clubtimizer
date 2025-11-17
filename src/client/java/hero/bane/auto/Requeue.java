@@ -99,7 +99,7 @@ public final class Requeue {
         HandledScreen<?> hs = getHandledNonInventoryScreen(client);
         if (hs != null) {
             String title = safeTitle(hs);
-            if (TextUtil.fastContains(title,MENU_KEYWORD)) {
+            if (title.contains(MENU_KEYWORD)) {
                 expectedMenuTitle = title;
                 initClickSequence();
                 state = State.CLICKING;

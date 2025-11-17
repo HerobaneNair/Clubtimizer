@@ -56,7 +56,7 @@ public class TextUtil {
         for (String line : tab) {
             String stripped = stripFormatting(line).trim();
             if (stripped.isEmpty()) break;
-            if (fastContains(stripped, "☠")) count++;
+            if (stripped.contains("☠")) count++;
         }
         Clubtimizer.temp1 = count;
         return count;
@@ -91,7 +91,7 @@ public class TextUtil {
     }
 
     public static int getDynamicDelay(MinecraftClient client, int tickBuffer) {
-        int ping = PingUtil.parsePingFromScoreboard(client);
+        int ping = PingUtil.parseScoreboardPing(client);
         ping = ping == 0 ? 25 : ping;
         int calculated = (int) Math.ceil(ping / 25.0) + tickBuffer;
         if (calculated < 1) calculated = 1;
@@ -207,7 +207,7 @@ public class TextUtil {
 
     public static boolean containsAny(String text, String... parts) {
         for (String p : parts) {
-            if (p != null && fastContains(text, p)) return true;
+            if (p != null && text.contains(p)) return true;
         }
         return false;
     }
@@ -245,64 +245,5 @@ public class TextUtil {
             }
         }
         return out;
-    }
-
-    public static boolean fastContains(String text, String pattern) {
-        int tLen = text.length();
-        int pLen = pattern.length();
-
-        if (pLen == 0) return true;
-        if (pLen > tLen) return false;
-
-        return pLen <= 8
-                ? tinySearch(text, pattern, tLen, pLen)
-                : bmhSearch(text, pattern, tLen, pLen);
-    }
-
-    private static boolean tinySearch(String t, String p, int tLen, int pLen) {
-        char first = p.charAt(0);
-        int max = tLen - pLen;
-
-        for (int i = 0; i <= max; i++) {
-            if (t.charAt(i) == first) {
-                int j = 1;
-                while (j < pLen && t.charAt(i + j) == p.charAt(j)) {
-                    j++;
-                }
-                if (j == pLen) return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean bmhSearch(String text, String pattern, int tLen, int pLen) {
-        int[] skip = buildSkipArray(pattern, pLen);
-
-        int i = 0;
-        int last = pLen - 1;
-
-        while (i <= tLen - pLen) {
-
-            int j = last;
-            while (text.charAt(i + j) == pattern.charAt(j)) {
-                if (j == 0) return true;
-                j--;
-            }
-
-            i += skip[text.charAt(i + last) & 0xFF];
-        }
-        return false;
-    }
-
-    private static int[] buildSkipArray(String pattern, int pLen) {
-        int[] skip = new int[256];
-        int last = pLen - 1;
-
-        Arrays.fill(skip, pLen);
-
-        for (int i = 0; i < last; i++) {
-            skip[pattern.charAt(i) & 0xFF] = last - i;
-        }
-        return skip;
     }
 }

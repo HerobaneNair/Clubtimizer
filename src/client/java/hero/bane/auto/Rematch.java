@@ -14,7 +14,7 @@ public class Rematch {
     public static boolean triggered = false;
 
     public static void handleMessage(String text) {
-        if (!TextUtil.fastContains(text,"⚔ Match Complete")) return;
+        if (!text.contains("⚔ Match Complete")) return;
         if (triggered) return;
         triggered = true;
 
@@ -54,7 +54,7 @@ public class Rematch {
         for (String raw : lines) {
             String clean = TextUtil.stripFormatting(raw).trim();
             String lower = clean.toLowerCase();
-            if (TextUtil.fastContains(lower,"ms") && !TextUtil.fastContains(lower,self)) return clean;
+            if (lower.contains("ms") && !lower.contains(self)) return clean;
         }
         return null;
     }

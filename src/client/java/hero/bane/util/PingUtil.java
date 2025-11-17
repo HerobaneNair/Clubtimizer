@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public class PingUtil {
     private static final Pattern PING_PATTERN = Pattern.compile("(\\d{1,4})\\s*ms");
 
-    public static int parsePing(String text) {
+    public static int parseTablistPing(String text) {
         if (text == null) return -1;
         Matcher matcher = PING_PATTERN.matcher(text);
         if (matcher.find()) {
@@ -22,7 +22,7 @@ public class PingUtil {
         return -1;
     }
 
-    public static int parsePingFromScoreboard(MinecraftClient client) {
+    public static int parseScoreboardPing(MinecraftClient client) {
         List<String> lines = TextUtil.getScoreboardLines(client);
         for (String line : lines) {
             if (line.contains("ms")) {
@@ -58,17 +58,17 @@ public class PingUtil {
     }
 
     private static int interpolate(int startColor, int endColor, float offset) {
-        int sr = (startColor >> 16) & 0xFF;
-        int sg = (startColor >> 8) & 0xFF;
-        int sb = startColor & 0xFF;
+        int startRed = (startColor >> 16) & 0xFF;
+        int startGreen = (startColor >> 8) & 0xFF;
+        int startBlue = startColor & 0xFF;
 
-        int er = (endColor >> 16) & 0xFF;
-        int eg = (endColor >> 8) & 0xFF;
-        int eb = endColor & 0xFF;
+        int endRed = (endColor >> 16) & 0xFF;
+        int endGreen = (endColor >> 8) & 0xFF;
+        int endBlue = endColor & 0xFF;
 
-        int r = (int) (sr + (er - sr) * offset);
-        int g = (int) (sg + (eg - sg) * offset);
-        int b = (int) (sb + (eb - sb) * offset);
+        int r = (int) (startRed + (endRed - startRed) * offset);
+        int g = (int) (startGreen + (endGreen - startGreen) * offset);
+        int b = (int) (startBlue + (endBlue - startBlue) * offset);
 
         return (r << 16) | (g << 8) | b;
     }

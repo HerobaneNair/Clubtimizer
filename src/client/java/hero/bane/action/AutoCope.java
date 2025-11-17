@@ -36,6 +36,5 @@ public class AutoCope {
         if (cfg.phrases.isEmpty()) return;
         String msg = cfg.phrases.get(ThreadLocalRandom.current().nextInt(cfg.phrases.size()));
         ChatUtil.delayedChat(msg, 200);
-        ChatUtil.delayedSay("[Clubtimizer a-c]: " + msg, 0xFFAA00, 200);
     }
 }

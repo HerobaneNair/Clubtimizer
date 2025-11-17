@@ -10,7 +10,7 @@ public class PartyMaker {
     private static final String CREATED_PARTY = "---\nCreated party - resend your invite\n---";
 
     public static void handleMessage(String text) {
-        if (!TextUtil.fastContains(text,NOT_IN_PARTY)) return;
+        if (!text.contains(NOT_IN_PARTY)) return;
         rightClickHorn();
         var client = Clubtimizer.client;
         ChatUtil.delayedSay(CREATED_PARTY, 0xFFAA00, TextUtil.getDynamicDelay(client, 2) * 50L);

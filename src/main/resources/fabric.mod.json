@@ -3,9 +3,13 @@
   "id": "clubtimizer",
   "version": "${version}",
   "name": "Clubtimizer",
-  "description": "Heros EVIL Optimizer",
-  "authors": [],
-  "contact": {},
+  "description": "PVP Club Utility mod",
+  "authors": [
+    "HerobaneNair"
+  ],
+  "contact": {
+
+  },
   "license": "MIT",
   "icon": "assets/clubtimizer/icon.png",
   "environment": "*",
@@ -23,6 +27,6 @@
   "depends": {
     "fabricloader": ">=0.15.11",
     "fabric": "*",
-    "minecraft": ">=1.21.5"
+    "minecraft": "1.21.5"
   }
 }

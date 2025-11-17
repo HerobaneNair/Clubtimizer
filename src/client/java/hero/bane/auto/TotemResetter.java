@@ -1,8 +1,8 @@
 package hero.bane.auto;
 
 import hero.bane.state.MCPVPStateChanger;
-import hero.bane.util.TextUtil;
 import net.fabricmc.loader.api.FabricLoader;
+
 import java.lang.reflect.Method;
 
 public class TotemResetter {
@@ -33,8 +33,8 @@ public class TotemResetter {
         if (now < reactionWindowEnd) return;
 
         boolean match =
-                TextUtil.fastContains(text,"⚔ Match Complete") ||
-                        (TextUtil.fastContains(text,"won the round") && !TextUtil.fastContains(text,"»"));
+                text.contains("⚔ Match Complete") ||
+                        (text.contains("won the round") && !text.contains("»"));
 
         if (match) invokeReset(now);
     }

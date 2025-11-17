@@ -3,7 +3,8 @@ package hero.bane.mixin;
 import hero.bane.action.AutoCope;
 import hero.bane.action.AutoGG;
 import hero.bane.action.AutoResponse;
-import hero.bane.auto.FriendList;
+import hero.bane.auto.Spectator;
+import hero.bane.util.FriendUtil;
 import hero.bane.auto.PartyMaker;
 import hero.bane.auto.Rematch;
 import hero.bane.auto.TotemResetter;
@@ -17,6 +18,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mixin(ClientPlayNetworkHandler.class)
 public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "onGameMessage", at = @At("HEAD"))
@@ -26,22 +30,23 @@ public class ClientPlayNetworkHandlerMixin {
         String legacyString = TextUtil.toLegacyString(original);
         String noFormatting = original.getString();
 
-        PartyMaker.handleMessage(noFormatting);
-        AutoCope.handleMessage(noFormatting);
         AutoResponse.handleMessage(legacyString, noFormatting);
+
+        AutoCope.handleMessage(noFormatting);
         AutoGG.handleMessage(noFormatting);
+        PartyMaker.handleMessage(noFormatting);
         Rematch.handleMessage(noFormatting);
+        Spectator.handleMessage(noFormatting);
         TotemResetter.handleMessage(noFormatting);
     }
 
     @Inject(method = "onCommandSuggestions", at = @At("HEAD"))
-    private void club$onSuggestions(CommandSuggestionsS2CPacket packet, CallbackInfo ci) {
-        if (packet.id() != FriendList.pendingId) return;
+    private void club$captureSuggestions(CommandSuggestionsS2CPacket packet, CallbackInfo ci) {
+        if (!FriendUtil.isOurRequest(packet.id())) return;
 
-        FriendList.complete(
-                packet.suggestions().stream()
-                        .map(CommandSuggestionsS2CPacket.Suggestion::text)
-                        .toList()
-        );
+        List<String> list = new ArrayList<>();
+        packet.suggestions().forEach(s -> list.add(s.text()));
+
+        FriendUtil.replaceAll(list);
     }
 }

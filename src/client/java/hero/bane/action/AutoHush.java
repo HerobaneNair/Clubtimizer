@@ -3,6 +3,8 @@ package hero.bane.action;
 import hero.bane.Clubtimizer;
 import hero.bane.config.ClubtimizerConfig;
 import hero.bane.state.MCPVPStateChanger;
+import hero.bane.util.ChatUtil;
+import hero.bane.util.FriendUtil;
 import hero.bane.util.TextUtil;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
@@ -27,26 +29,19 @@ public class AutoHush {
         int arrowIndex = legacy.indexOf('»');
         if (arrowIndex < 0) return msg;
 
-        String beforeArrow = legacy.substring(0, arrowIndex);
-        if (TextUtil.fastContains(beforeArrow,Clubtimizer.playerName)) return msg;
-
+        String beforeArrow = legacy.substring(0, arrowIndex).strip();
         String afterArrow = legacy.substring(arrowIndex + 1).strip();
 
-        String realNamePart = beforeArrow.chars()
-                .dropWhile(c -> !Character.isLetter(c))
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString()
-                .strip();
-
-        if (realNamePart.equalsIgnoreCase(Clubtimizer.playerName)) return msg;
+        String realNamePart = cleanName(beforeArrow);
+        if (isSelfOrFriend(realNamePart)) return msg;
 
         String lower = legacy.toLowerCase();
 
-        if (TextUtil.fastContains(lower,"§#7a7a7a »")) {
+        if (lower.contains("§#7a7a7a »")) {
             return buildHidden(beforeArrow, afterArrow, false);
         }
 
-        if (TextUtil.fastContains(lower,"§#1fa5ff »")) {
+        if (lower.contains("§#1fa5ff »")) {
             String cleaned = TextUtil.stripFormatting(afterArrow).trim().toLowerCase();
             boolean isTrigger = AutoGG.isTrigger(cleaned) || cleaned.equals("ss");
             if (cfg.allowSS && isTrigger) return msg;
@@ -54,6 +49,39 @@ public class AutoHush {
         }
 
         return msg;
+    }
+
+    public static void onMatchJoin() {
+        var cfg = ClubtimizerConfig.getAutoHush();
+        if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
+        if (!matchJoin && !allowLobbyJoin) return;
+        ChatUtil.delayedChat(cfg.joinMessage);
+        matchJoin = false;
+        allowLobbyJoin = false;
+    }
+
+    private static String cleanName(String raw) {
+        if (raw == null) return "";
+
+        String stripped = TextUtil.stripFormatting(raw).strip();
+        if (stripped.isEmpty()) return stripped;
+
+        char first = stripped.charAt(0);
+        if (!Character.isLetterOrDigit(first)) {
+            stripped = stripped.substring(1).strip();
+        }
+
+        int end = stripped.length();
+        while (end > 0 && !Character.isLetterOrDigit(stripped.charAt(end - 1))) {
+            end--;
+        }
+        return stripped.substring(0, end);
+    }
+
+    private static boolean isSelfOrFriend(String raw) {
+        String name = cleanName(raw).toLowerCase();
+        if (name.equals(Clubtimizer.playerName.toLowerCase())) return true;
+        return FriendUtil.isFriend(name);
     }
 
     private static Text buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
@@ -72,14 +100,5 @@ public class AutoHush {
 
         base.append(hiddenPart);
         return base;
-    }
-
-    public static void onMatchJoin() {
-        var cfg = ClubtimizerConfig.getAutoHush();
-        if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
-        if (!matchJoin && !allowLobbyJoin) return;
-        hero.bane.util.ChatUtil.delayedChat(cfg.joinMessage);
-        matchJoin = false;
-        allowLobbyJoin = false;
     }
 }

@@ -4,7 +4,6 @@ import hero.bane.Clubtimizer;
 import hero.bane.config.ClubtimizerConfig;
 import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.ChatUtil;
-import hero.bane.util.TextUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,7 @@ public class AutoResponse {
             if (x >= -300 && x <= 300 && z >= -300 && z <= 300) return;
         }
 
-        if (!TextUtil.fastContains(text.toLowerCase(),"§#1fa5ff »")) return;
+        if (!text.toLowerCase().contains("§#1fa5ff »")) return;
 
         int arrowIndex = text2.indexOf('»');
         if (arrowIndex < 0) return;
@@ -43,7 +42,7 @@ public class AutoResponse {
             for (String trigger : triggers) {
                 String t = trigger.trim().toLowerCase();
                 if (t.isEmpty()) continue;
-                if (TextUtil.fastContains(afterArrow,t)) {
+                if (afterArrow.contains(t)) {
                     reactionWindowEnd = now + 1000L;
                     List<String> responses = entry.getValue();
                     if (responses.isEmpty()) return;

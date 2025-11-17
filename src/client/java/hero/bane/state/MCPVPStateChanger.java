@@ -1,12 +1,12 @@
 package hero.bane.state;
 
 import hero.bane.Clubtimizer;
-import hero.bane.auto.FriendList;
 import hero.bane.action.AutoGG;
 import hero.bane.action.AutoHush;
 import hero.bane.auto.Rematch;
 import hero.bane.auto.TotemResetter;
 import hero.bane.mixin.accessor.PlayerListHudAccessor;
+import hero.bane.util.FriendUtil;
 import hero.bane.util.TextUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.PlayerListHud;
@@ -26,6 +26,18 @@ public class MCPVPStateChanger {
     private static final MCPVPState[] IN_GAME_VALUES =
             java.util.Arrays.copyOf(MCPVPState.values(), 9);
     private static final boolean[] IN_GAME_MAP = new boolean[MCPVPState.values().length];
+    private static final boolean[] IN_SPEC_MAP = new boolean[MCPVPState.values().length];
+
+    static {
+        for (MCPVPState s : IN_GAME_VALUES) {
+            IN_GAME_MAP[s.ordinal()] = true;
+        }
+        IN_SPEC_MAP[MCPVPState.SPECTATING.ordinal()] = true;
+        IN_SPEC_MAP[MCPVPState.FFA_DEAD.ordinal()] = true;
+        IN_SPEC_MAP[MCPVPState.TEAMFIGHT_BLUE_DEAD.ordinal()] = true;
+        IN_SPEC_MAP[MCPVPState.TEAMFIGHT_RED_DEAD.ordinal()] = true;
+    }
+
 
     static {
         for (MCPVPState s : IN_GAME_VALUES) {
@@ -35,6 +47,7 @@ public class MCPVPStateChanger {
 
     private static boolean inGame = false;
     private static boolean inLobby = false;
+    private static boolean inSpec = false;
 
     public static MCPVPState get() {
         return current;
@@ -51,7 +64,7 @@ public class MCPVPStateChanger {
     }
 
     public static void update() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        MinecraftClient client = Clubtimizer.client;
         var player = client.player;
         var world = client.world;
         ClientPlayNetworkHandler net = client.getNetworkHandler();
@@ -62,7 +75,7 @@ public class MCPVPStateChanger {
                         world != null &&
                         net != null &&
                         server != null &&
-                        TextUtil.fastContains(server.address, "mcpvp.club");
+                        server.address.contains("mcpvp.club");
 
         if (!valid) {
             current = MCPVPState.NONE;
@@ -93,11 +106,12 @@ public class MCPVPStateChanger {
 
         inGame = IN_GAME_MAP[current.ordinal()];
         inLobby = (current == MCPVPState.LOBBY || current == MCPVPState.IN_QUEUE);
+        inSpec = IN_SPEC_MAP[current.ordinal()];
     }
 
     private static boolean checkLimbo(ClientPlayNetworkHandler net) {
         String brand = Objects.requireNonNull(net).getBrand();
-        if (brand != null && TextUtil.fastContains(brand, "Limbo")) {
+        if (brand != null && brand.contains("Limbo")) {
             setState(MCPVPState.LIMBO);
             return true;
         }
@@ -107,7 +121,7 @@ public class MCPVPStateChanger {
     private static boolean checkSpectating(String actionbar) {
         if (actionbar == null) return false;
         String lower = actionbar.toLowerCase();
-        if (TextUtil.fastContains(lower, "currently spectating")) {
+        if (lower.contains("currently spectating")) {
             setState(MCPVPState.SPECTATING);
             return true;
         }
@@ -126,7 +140,7 @@ public class MCPVPStateChanger {
 
     private static boolean checkFFA(List<String> tab, boolean spectator) {
         for (String line : tab) {
-            if (TextUtil.fastContains(line, "§6🗡")) {
+            if (line.contains("§6🗡")) {
                 setState(spectator ? MCPVPState.FFA_DEAD : MCPVPState.FFA);
                 return true;
             }
@@ -137,7 +151,7 @@ public class MCPVPStateChanger {
     private static boolean checkPicking(List<String> scoreboardLines) {
         String flag = "⚑ " + Clubtimizer.playerName;
         for (String line : scoreboardLines) {
-            if (TextUtil.fastContains(line, flag) && TextUtil.fastContains(line, "§f")) {
+            if (line.contains(flag) && line.contains("§f")) {
                 setState(MCPVPState.PICKING_TEAM);
                 return true;
             }
@@ -146,7 +160,7 @@ public class MCPVPStateChanger {
     }
 
     private static boolean checkDuel(List<String> tab, List<String> scoreboardLines, String playerName) {
-        if (tab.isEmpty() || !TextUtil.fastContains(tab.getFirst(), "Duel")) return false;
+        if (tab.isEmpty() || !tab.getFirst().contains("Duel")) return false;
 
         int duelSize = TextUtil.parseDuelSize(TextUtil.stripFormatting(tab.getFirst()));
         int skulls = TextUtil.countSkulls(tab);
@@ -155,12 +169,12 @@ public class MCPVPStateChanger {
         String flag = "⚑ " + playerName;
 
         for (String line : scoreboardLines) {
-            if (!TextUtil.fastContains(line, flag)) continue;
+            if (!line.contains(flag)) continue;
 
-            if (TextUtil.fastContains(line, "§#1FA5FF")) {
+            if (line.contains("§#1FA5FF")) {
                 setState(MCPVPState.BLUE);
                 return true;
-            } else if (TextUtil.fastContains(line, "§c")) {
+            } else if (line.contains("§c")) {
                 setState(MCPVPState.RED);
                 return true;
             } else {
@@ -171,7 +185,7 @@ public class MCPVPStateChanger {
     }
 
     private static boolean checkTeamFight(List<String> tab, List<String> scoreboardLines, String playerName, boolean spectator) {
-        if (tab.isEmpty() || !TextUtil.fastContains(tab.getFirst(), "Duel")) return false;
+        if (tab.isEmpty() || !tab.getFirst().contains("Duel")) return false;
 
         int duelSize = TextUtil.parseDuelSize(TextUtil.stripFormatting(tab.getFirst()));
         int skulls = TextUtil.countSkulls(tab);
@@ -180,12 +194,20 @@ public class MCPVPStateChanger {
         String flag = "⚑ " + playerName;
 
         for (String line : scoreboardLines) {
-            if (!TextUtil.fastContains(line, flag)) continue;
+            if (!line.contains(flag)) continue;
 
-            if (TextUtil.fastContains(line, "§#1FA5FF")) {
+            if (line.contains("§#1FA5FF")) {
+                if(current == MCPVPState.BLUE) {
+                    setState(MCPVPState.BLUE);
+                    return true;
+                }
                 setState(spectator ? MCPVPState.TEAMFIGHT_BLUE_DEAD : MCPVPState.TEAMFIGHT_BLUE);
                 return true;
-            } else if (TextUtil.fastContains(line, "§c")) {
+            } else if (line.contains("§c")) {
+                if(current == MCPVPState.RED) {
+                    setState(MCPVPState.RED);
+                    return true;
+                }
                 setState(spectator ? MCPVPState.TEAMFIGHT_RED_DEAD : MCPVPState.TEAMFIGHT_RED);
                 return true;
             }
@@ -199,9 +221,9 @@ public class MCPVPStateChanger {
         if (footer == null) return false;
 
         String f = TextUtil.toLegacyString(footer);
-        if (!TextUtil.fastContains(f, "Displaying:")) return false;
+        if (!f.contains("Displaying:")) return false;
 
-        if (actionbar != null && TextUtil.fastContains(actionbar, "Queued for")) {
+        if (actionbar != null && actionbar.contains("Queued for")) {
             setState(MCPVPState.IN_QUEUE);
             return true;
         }
@@ -219,12 +241,14 @@ public class MCPVPStateChanger {
         return inLobby;
     }
 
+    public static boolean inSpec() {return inSpec;}
+
     private static void onLobby() {
         AutoHush.matchJoin = true;
         AutoHush.allowLobbyJoin = true;
         Rematch.triggered = false;
         AutoGG.resetReactionWindowEnd();
         TotemResetter.resetCounter();
-        FriendList.request();
+        FriendUtil.requestUpdate();
     }
 }

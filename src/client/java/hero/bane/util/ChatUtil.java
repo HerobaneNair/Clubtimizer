@@ -82,6 +82,9 @@ public class ChatUtil {
 
     public static void chat(String message) {
         if (invalidClient()) return;
+        if (message.charAt(0) == '/') {
+            command((message));
+        }
         client.player.networkHandler.sendChatMessage(message);
     }
 
@@ -91,5 +94,13 @@ public class ChatUtil {
 
     public static void delayedChat(String message) {
         delayedChat(message, 100);
+    }
+
+    private static void command(String message) {
+        if (invalidClient()) return;
+        if (message.charAt(0) == '/') {
+            message = message.substring(1);
+        }
+        Clubtimizer.player.networkHandler.sendCommand(message);
     }
 }

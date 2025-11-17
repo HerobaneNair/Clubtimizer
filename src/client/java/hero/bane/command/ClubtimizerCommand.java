@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import hero.bane.Clubtimizer;
-import hero.bane.auto.FriendList;
 import hero.bane.auto.Requeue;
 import hero.bane.config.ClubtimizerConfig;
 import hero.bane.state.MCPVPState;
@@ -14,6 +13,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.Util;
 
 import java.io.File;
@@ -65,14 +65,10 @@ public class ClubtimizerCommand {
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
         return ClientCommandManager.literal("stateGet")
                 .executes(ctx -> {
-                    if (Clubtimizer.player == null || Clubtimizer.client.world == null) return 0;
+                    ClientPlayerEntity player = Clubtimizer.player;
+                    if (player == null || Clubtimizer.client.world == null) return 0;
                     MCPVPState state = MCPVPStateChanger.get();
                     say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
-
-                    List<String> names = FriendList.cached;
-                    for(String name : names) {
-                        say(TextUtil.rainbowGradient(name));
-                    }
                     return 1;
                 });
     }

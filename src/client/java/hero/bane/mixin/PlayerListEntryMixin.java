@@ -1,8 +1,8 @@
 package hero.bane.mixin;
 
+import hero.bane.state.MCPVPState;
+import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.PingUtil;
-import hero.bane.util.TextUtil;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,13 +19,10 @@ public abstract class PlayerListEntryMixin {
 
     @Inject(method = "getLatency", at = @At("HEAD"), cancellable = true)
     private void club$getPingFromTab(CallbackInfoReturnable<Integer> cir) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.getCurrentServerEntry() == null) return;
-        String address = client.getCurrentServerEntry().address;
-        if (address == null || !TextUtil.fastContains(address,"mcpvp.club")) return;
+        if (MCPVPStateChanger.get().equals(MCPVPState.NONE)) return;
 
         if (this.displayName == null) return;
-        int parsed = PingUtil.parsePing(this.displayName.getString());
+        int parsed = PingUtil.parseTablistPing(this.displayName.getString());
         if (parsed >= 0) {
             cir.setReturnValue(parsed);
         }
