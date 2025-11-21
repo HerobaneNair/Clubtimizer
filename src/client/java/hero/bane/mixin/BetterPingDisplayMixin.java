@@ -18,9 +18,7 @@ public abstract class BetterPingDisplayMixin {
 
     @Inject(method = "renderPingDisplay", at = @At("HEAD"), cancellable = true)
     private static void club$fixBetterPing(MinecraftClient client, PlayerListHud instance, DrawContext context, int width, int x, int y, PlayerListEntry entry, CallbackInfo ci) {
-        if (MCPVPStateChanger.get().equals(MCPVPState.NONE)) {
-            return;
-        }
+        if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
         int parsedPing = -1;
         if (entry.getDisplayName() != null) {
             parsedPing = PingUtil.parseTablistPing(entry.getDisplayName().getString());

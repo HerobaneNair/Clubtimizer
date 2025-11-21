@@ -1,6 +1,7 @@
 package hero.bane;
 
 import hero.bane.auto.Requeue;
+import hero.bane.auto.Spectator;
 import hero.bane.auto.TotemResetter;
 import hero.bane.command.ClubtimizerCommand;
 import hero.bane.config.ClubtimizerConfig;
@@ -34,11 +35,15 @@ public class Clubtimizer implements ClientModInitializer {
         if (player != null) playerName = player.getName().getString();
         ClubtimizerCommand.register();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, c) -> updateIp(c));
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, c) -> ip = "_");
-        ClientTickEvents.END_CLIENT_TICK.register(c -> {
-            Requeue.handleTick(c);
-            if (c.player != null && c.world != null) {
-                long t = c.world.getTime();
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, c) -> {
+            MCPVPStateChanger.update();
+            ip = "_";
+        });
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            Spectator.handleTick();
+            Requeue.handleTick(client);
+            if (client.player != null && client.world != null) {
+                long t = client.world.getTime();
                 if (MCPVPStateChanger.get() != MCPVPState.NONE) {
                     if (t % 5 == 0) MCPVPStateChanger.update();
                 } else {
@@ -46,10 +51,11 @@ public class Clubtimizer implements ClientModInitializer {
                 }
             }
         });
-        TotemResetter.initializeReflection();
+        TotemResetter.initReflection();
     }
 
     private static void updateIp(MinecraftClient c) {
+        MCPVPStateChanger.update();
         var entry = c.getCurrentServerEntry();
         if (entry != null) {
             ip = entry.address.toLowerCase();

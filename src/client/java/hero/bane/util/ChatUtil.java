@@ -24,12 +24,17 @@ public class ChatUtil {
     }
 
     public static void delayedSay(String message, int color, long delayMs) {
-        Clubtimizer.executor.schedule(() -> say(message, color), delayMs, TimeUnit.MILLISECONDS);
+        delayedSay(message, color, true, delayMs);
     }
 
     public static void delayedSay(String message, int color) {
-        delayedSay(message, color, 100);
+        delayedSay(message, color, true,100);
     }
+
+    public static void delayedSay(String message, int color, boolean prepend, long delayMs) {
+        Clubtimizer.executor.schedule(() -> say(message, color, prepend), delayMs, TimeUnit.MILLISECONDS);
+    }
+
 
     public static void say(String message) {
         say(message, 0xFFFFFF, true);

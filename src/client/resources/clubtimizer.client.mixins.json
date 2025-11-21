@@ -10,7 +10,6 @@
     "EntityRenderDispatcherMixin",
     "HandledScreenMixin",
     "LivingEntityRendererMixin",
-    "MinecraftClientMixin",
     "PlayerListEntryMixin",
     "PlayerListHudMixin",
     "TeleportSpectatorMenuMixin",

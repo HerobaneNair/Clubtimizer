@@ -90,14 +90,6 @@ public class TextUtil {
         return toLegacyString(msg);
     }
 
-    public static int getDynamicDelay(MinecraftClient client, int tickBuffer) {
-        int ping = PingUtil.parseScoreboardPing(client);
-        ping = ping == 0 ? 25 : ping;
-        int calculated = (int) Math.ceil(ping / 25.0) + tickBuffer;
-        if (calculated < 1) calculated = 1;
-        return calculated;
-    }
-
     public static String buildVisible(String owner, Team team) {
         if (team == null) return owner;
         StringBuilder visible = new StringBuilder();
@@ -245,5 +237,12 @@ public class TextUtil {
             }
         }
         return out;
+    }
+
+    public static boolean roundEnd(String text, boolean roundCheck) {
+        return text.contains("⚔ Match Complete")
+                || (roundCheck &&
+                (text.contains("won the round") && text.contains("\uD83D\uDDE1") ||
+                        text.equals("Draw!")));
     }
 }

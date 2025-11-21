@@ -52,6 +52,14 @@ public class PingUtil {
         return 0xBF0000;
     }
 
+    public static int getDynamicDelay(MinecraftClient client, int tickBuffer) {
+        int ping = PingUtil.parseScoreboardPing(client);
+        ping = ping == 0 ? 25 : ping;
+        int calculated = (int) Math.ceil(ping / 25.0) + tickBuffer;
+        if (calculated < 1) calculated = 1;
+        return calculated;
+    }
+
     private static float computeOffset(int start, int end, int value) {
         float offset = (value - start) / (float) (end - start);
         return MathHelper.clamp(offset, 0.0F, 1.0F);

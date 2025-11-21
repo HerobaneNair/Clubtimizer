@@ -1,8 +1,6 @@
 package hero.bane.auto;
 
 import hero.bane.mixin.accessor.PlayerListEntryAccessor;
-import hero.bane.state.MCPVPState;
-import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.PingUtil;
 import hero.bane.util.TextUtil;
 import net.minecraft.client.network.PlayerListEntry;
@@ -12,15 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Tablist {
-
-    public static boolean goodState() {
-        MCPVPState s = MCPVPStateChanger.get();
-        return MCPVPStateChanger.inGame() || s == MCPVPState.SPECTATING;
-    }
-
-    public static boolean shouldntApply() {
-        return MCPVPStateChanger.get().equals(MCPVPState.NONE);
-    }
 
     public static String removeMs(String s) {
         if (!s.contains("ms")) return s;

@@ -18,7 +18,7 @@ public class AutoCope {
         if (!MCPVPStateChanger.inGame()) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastCopeTime < 1000) return;
+        if (now <= lastCopeTime + 1000) return;
 
         String name = Clubtimizer.playerName;
         if (TextUtil.containsAny(text,

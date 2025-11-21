@@ -38,10 +38,10 @@ public abstract class ChatHudMixin {
 
         if (MCPVPStateChanger.inGame()
                 && ClubtimizerConfig.getAutoHush().specChat) {
-
             if (TextUtil.toLegacyString(message).contains("§#7a7a7a »")) {
                 ci.cancel();
             }
+
         }
     }
 

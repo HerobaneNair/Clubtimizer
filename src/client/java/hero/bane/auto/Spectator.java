@@ -5,11 +5,12 @@ import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.ChatUtil;
 import hero.bane.util.PingUtil;
 import hero.bane.util.TextUtil;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,7 @@ public class Spectator {
         }
     }
 
-    private static String resolveClean(PlayerEntity p) {
+    private static String cleanName(PlayerEntity p) {
         if (Clubtimizer.client == null || Clubtimizer.client.getNetworkHandler() == null)
             return p.getName().getString();
         PlayerListEntry entry = Clubtimizer.client.getNetworkHandler().getPlayerListEntry(p.getUuid());
@@ -82,24 +83,15 @@ public class Spectator {
         return parts.length >= 2 ? parts[1] : p.getName().getString();
     }
 
-    private static int getPing() {
-        return PingUtil.parseScoreboardPing(Clubtimizer.client);
-    }
-
-    public static void tick() {
+    public static void handleTick() {
         MinecraftClient client = Clubtimizer.client;
-        if (followed == null) return;
-        if (client.player == null) {
+
+        if (followed == null || client.player == null) {
             stopFollowing();
             return;
         }
 
-        if (!MCPVPStateChanger.inSpec()) {
-            stopFollowing();
-            return;
-        }
-
-        if (client.options.sneakKey.isPressed()) {
+        if (!MCPVPStateChanger.inSpec() || client.options.sneakKey.isPressed()) {
             stopFollowing();
             return;
         }
@@ -110,47 +102,48 @@ public class Spectator {
             return;
         }
 
-        String clean = resolveClean(followed);
+        String clean = cleanName(followed);
         if (!aliveList.contains(clean)) {
             stopFollowing();
             return;
         }
 
-        BlockPos pos = followed.getBlockPos();
         assert client.world != null;
-        boolean inRender = client.world
-                .getChunkManager()
-                .isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4);
+        boolean entityLoaded = client.world.getPlayers().contains((AbstractClientPlayerEntity) followed);
+        if (!entityLoaded) {
+            ChatUtil.chat("/tp " + clean);
+            return;
+        }
+
+        double distSq = client.player.squaredDistanceTo(followed);
+        if (distSq > (256 * 256)) {
+            ChatUtil.chat("/tp " + clean);
+            return;
+        }
 
         long now = System.currentTimeMillis();
 
-        if (!inRender) {
-            if (now - lastTeleport >= 1500L) {
-                lastTeleport = now;
-                ChatUtil.chat("/tp " + clean);
+        teleportToTarget(client);
 
-                double ping = getPing();
-                followPauseUntil = now + (long)(ping * 2.5);
-
-                client.execute(() -> {
-                    BlockPos np = followed.getBlockPos();
-                    boolean stillMissing =
-                            !client.world.getChunkManager()
-                                    .isChunkLoaded(np.getX() >> 4, np.getZ() >> 4);
-
-                    if (stillMissing) stopFollowing();
-                });
-            }
-            return;
-        }
-
-        if (now < followPauseUntil) {
-            client.setCameraEntity(followed);
-            return;
-        }
-
-        client.setCameraEntity(followed);
+        if (now >= followPauseUntil) client.setCameraEntity(followed);
     }
+
+    private static void teleportToTarget(MinecraftClient client) {
+        if (client.player == null || followed == null) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastTeleport < 1500) return;
+
+        lastTeleport = now;
+
+        client.player.setPos(followed.getX(), followed.getY(), followed.getZ());
+        soundFixer(client);
+
+        double ping = PingUtil.parseScoreboardPing(client);
+        followPauseUntil = now + (long)(ping * 2.8);
+    }
+
+
 
     public static void handleMessage(String text) {
         if (!MCPVPStateChanger.inSpec()) return;
@@ -163,11 +156,29 @@ public class Spectator {
             if (x >= -300 && x <= 300 && z >= -300 && z <= 300) return;
         }
 
-        boolean messageWorks = text.contains("⚔ Match Complete")
-                || (text.contains("won the round") && text.contains("\uD83D\uDDE1"));
-
-        if (messageWorks) {
+        if (TextUtil.roundEnd(text, true)) {
             roundEnded = true;
         }
     }
+
+    private static void soundFixer(MinecraftClient client) {
+        if (client.player == null || followed == null) return;
+
+        Entity original = followed;
+        client.setCameraEntity(client.player);
+        client.setCameraEntity(original);
+    }
+
+    public static void onEntitiesDestroyed(IntList ids) {
+        if (followed == null) return;
+
+        int targetId = followed.getId();
+        for (int id : ids) {
+            if (id == targetId) {
+                stopFollowing();
+                return;
+            }
+        }
+    }
+
 }

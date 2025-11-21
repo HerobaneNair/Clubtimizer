@@ -3,6 +3,8 @@ package hero.bane.mixin;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import hero.bane.Clubtimizer;
 import hero.bane.auto.Tablist;
+import hero.bane.state.MCPVPState;
+import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.PingUtil;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.DrawContext;
@@ -27,7 +29,7 @@ public abstract class PlayerListHudMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void club$processTablist(DrawContext ctx, int width, Scoreboard sb, @Nullable ScoreboardObjective obj, CallbackInfo ci) {
-        if (!Tablist.goodState()) return;
+        if (!(MCPVPStateChanger.inGame() || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) return;
 
         long tick = Clubtimizer.client.world != null ? Clubtimizer.client.world.getTime() : 0L;
         List<PlayerListEntry> list = this.collectPlayerEntries();
@@ -36,7 +38,7 @@ public abstract class PlayerListHudMixin {
 
     @Inject(method = "renderLatencyIcon", at = @At("HEAD"), cancellable = true)
     private void club$fixTabPings(DrawContext context, int width, int x, int y, PlayerListEntry entry, CallbackInfo ci) {
-        if (Tablist.shouldntApply()) return;
+        if (MCPVPStateChanger.get().equals(MCPVPState.NONE)) return;
 
         int latency = entry.getLatency();
         if (latency < 0 || latency == 1 || latency >= 1000) {
@@ -62,7 +64,7 @@ public abstract class PlayerListHudMixin {
 
     @ModifyExpressionValue(method = "render", at = @At(value = "CONSTANT", args = "intValue=13"))
     private int club$widenForPingText(int original) {
-        if (Tablist.shouldntApply()) return original;
+        if (MCPVPStateChanger.get().equals(MCPVPState.NONE)) return original;
         if (FabricLoader.getInstance().isModLoaded("betterpingdisplay")) return original;
         return Clubtimizer.client.textRenderer.getWidth("xxxxms");
     }

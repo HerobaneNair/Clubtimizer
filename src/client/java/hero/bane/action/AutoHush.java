@@ -60,7 +60,7 @@ public class AutoHush {
         allowLobbyJoin = false;
     }
 
-    private static String cleanName(String raw) {
+    public static String cleanName(String raw) {
         if (raw == null) return "";
 
         String stripped = TextUtil.stripFormatting(raw).strip();
@@ -85,7 +85,7 @@ public class AutoHush {
     }
 
     private static Text buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
-        String prefix = playerChat ? beforeArrow + "§#1FA5FF» " : beforeArrow + "§#7A7A7A» ";
+        String prefix = playerChat ? beforeArrow + "§#1FA5FF » " : beforeArrow + "§#7A7A7A » ";
         MutableText base = (MutableText) TextUtil.fromLegacy(prefix);
 
         String hoverText = TextUtil.stripFormatting(afterArrow).trim();

@@ -68,19 +68,18 @@ public class MCPVPStateChanger {
         var player = client.player;
         var world = client.world;
         ClientPlayNetworkHandler net = client.getNetworkHandler();
-        var server = client.getCurrentServerEntry();
 
         boolean valid =
                 player != null &&
                         world != null &&
                         net != null &&
-                        server != null &&
-                        server.address.contains("mcpvp.club");
+                        Clubtimizer.ip.contains("mcpvp.club");
 
         if (!valid) {
             current = MCPVPState.NONE;
             inGame = false;
             inLobby = false;
+            inSpec = false;
             return;
         }
 

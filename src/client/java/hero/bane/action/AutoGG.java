@@ -4,6 +4,7 @@ import hero.bane.Clubtimizer;
 import hero.bane.config.ClubtimizerConfig;
 import hero.bane.state.MCPVPStateChanger;
 import hero.bane.util.ChatUtil;
+import hero.bane.util.TextUtil;
 
 public class AutoGG {
     private static long reactionWindowEnd = 0;
@@ -21,8 +22,7 @@ public class AutoGG {
         }
 
         long now = System.currentTimeMillis();
-        boolean messageWorks = text.contains("⚔ Match Complete")
-                || (cfg.roundEnabled && text.contains("won the round") && text.contains("\uD83D\uDDE1"));
+        boolean messageWorks = TextUtil.roundEnd(text, cfg.roundEnabled);
 
         if (messageWorks) {
             unsentGG = false;
@@ -52,7 +52,7 @@ public class AutoGG {
         if (spaceIdx > 0) cleaned = cleaned.substring(0, spaceIdx);
 
         if (isTrigger(cleaned) && now < reactionWindowEnd) {
-            ChatUtil.delayedChat(cfg.message);
+            ChatUtil.chat(cfg.message);
             unsentGG = true;
         }
     }

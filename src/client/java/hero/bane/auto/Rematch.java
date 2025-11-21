@@ -13,9 +13,13 @@ import java.util.List;
 public class Rematch {
     public static boolean triggered = false;
 
+    private static final String CLICK_FINAL = "[Click to Rematch ";
+    private static final String OPEN_FINAL = "Click to open chat with ";
+    private static final Style REMATCH_COLOR = Style.EMPTY.withColor(0x55FFFF);
+    private static final Style HOVER_COLOR = Style.EMPTY.withColor(0xBB33DD);
+
     public static void handleMessage(String text) {
-        if (!text.contains("⚔ Match Complete")) return;
-        if (triggered) return;
+        if (!TextUtil.roundEnd(text, false) || triggered) return;
         triggered = true;
 
         var client = Clubtimizer.client;
@@ -25,36 +29,39 @@ public class Rematch {
         MCPVPState state = MCPVPStateChanger.get();
         if (state != MCPVPState.RED && state != MCPVPState.BLUE) return;
 
-        String opponentRaw = getOpponentFromTabList(client);
-        if (opponentRaw == null || opponentRaw.isEmpty()) return;
-
-        String[] parts = opponentRaw.split(" ");
-        if (parts.length < 2) return;
-        String opponent = parts[1];
+        String opponent = parseOpponent(client);
+        if (opponent == null) return;
 
         MutableText clickable = Text.literal("")
-                .append(Text.literal("[ Click to Rematch").styled(s -> s.withColor(0x55FFFF)))
-                .append(TextUtil.rainbowGradient(" " + opponent))
-                .append(Text.literal(" ]").styled(s -> s.withColor(0x55FFFF)));
+                .append(Text.literal(CLICK_FINAL).setStyle(REMATCH_COLOR))
+                .append(TextUtil.rainbowGradient(opponent))
+                .append(Text.literal("]").setStyle(REMATCH_COLOR));
 
-        clickable.setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent.SuggestCommand("/duel " + opponent))
-                .withHoverEvent(new HoverEvent.ShowText(
-                        Text.literal("Click to open chat with \n'/duel " + opponent + "'")))
+        MutableText hovered = Text.literal("")
+                .append(Text.literal(OPEN_FINAL).setStyle(HOVER_COLOR))
+                .append(TextUtil.rainbowGradient("/duel " + opponent));
+
+        clickable.setStyle(
+                Style.EMPTY
+                        .withClickEvent(new ClickEvent.SuggestCommand("/duel " + opponent))
+                        .withHoverEvent(new HoverEvent.ShowText(hovered))
         );
-
         ChatUtil.delayedSay(clickable);
     }
 
-    private static String getOpponentFromTabList(MinecraftClient client) {
+    private static String parseOpponent(MinecraftClient client) {
         List<String> lines = TextUtil.getOrderedTabList(client);
         if (lines.isEmpty()) return null;
 
-        String self = Clubtimizer.playerName.toLowerCase();
+        String self = Clubtimizer.playerName;
+
         for (String raw : lines) {
             String clean = TextUtil.stripFormatting(raw).trim();
-            String lower = clean.toLowerCase();
-            if (lower.contains("ms") && !lower.contains(self)) return clean;
+
+            if (!clean.contains(self) && clean.contains("ms")) {
+                String[] parts = clean.split(" ");
+                return parts.length >= 2 ? parts[1] : null;
+            }
         }
         return null;
     }

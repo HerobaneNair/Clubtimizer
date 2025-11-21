@@ -20,7 +20,7 @@ public abstract class LivingEntityRendererMixin {
             )
     )
     private Text club$remapNameTag(Text original) { //Probably actually never used but having it just in case
-        if (MCPVPStateChanger.get().equals(MCPVPState.NONE)) return original;
+        if (MCPVPStateChanger.get() == MCPVPState.NONE) return original;
         if (original == null) return null;
         return IconUtil.remapIcons(original);
     }

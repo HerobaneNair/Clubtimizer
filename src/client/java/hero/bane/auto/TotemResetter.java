@@ -10,7 +10,7 @@ public class TotemResetter {
     private static boolean reflectionEnabled = false;
     private static Method resetMethod = null;
 
-    public static void initializeReflection() {
+    public static void initReflection() {
         if (!FabricLoader.getInstance().isModLoaded("totemcounter")) {
             reflectionEnabled = false;
             resetMethod = null;

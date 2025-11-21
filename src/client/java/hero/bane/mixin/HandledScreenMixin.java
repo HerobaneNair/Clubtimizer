@@ -19,7 +19,7 @@ public abstract class HandledScreenMixin {
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void club$antiBackgroundClicker(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        if(MCPVPStateChanger.get().equals(MCPVPState.NONE)) return;
+        if(MCPVPStateChanger.get() == MCPVPState.NONE) return;
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
         HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 
