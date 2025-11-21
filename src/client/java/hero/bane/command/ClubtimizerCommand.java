@@ -43,23 +43,58 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildLobby() {
-        return literalToggleGroup(
-                new String[][]{
-                        {"hideplayers", "Hide Players in lobby"},
-                        {"hitbox", "Turn on hitboxes when connecting"},
-                        {"hidechat", "Hide Chat in lobby"}
-                },
-                List.of(
-                        ClubtimizerConfig::setLobbyHidePlayers,
-                        ClubtimizerConfig::setLobbyHitboxes,
-                        ClubtimizerConfig::setLobbyHideChat
-                ),
-                List.of(
-                        () -> ClubtimizerConfig.getLobby().hidePlayers,
-                        () -> ClubtimizerConfig.getLobby().hitboxes,
-                        () -> ClubtimizerConfig.getLobby().hideChat
+        return ClientCommandManager.literal("lobby")
+                .then(ClientCommandManager.literal("hideplayers")
+                        .executes(ctx -> toggle(
+                                () -> ClubtimizerConfig.getLobby().hidePlayers,
+                                ClubtimizerConfig::setLobbyHidePlayers,
+                                "Hide Players in lobby"
+                        ))
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx -> setToggle(true,
+                                        ClubtimizerConfig::setLobbyHidePlayers,
+                                        "Hide Players in lobby"
+                                )))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx -> setToggle(false,
+                                        ClubtimizerConfig::setLobbyHidePlayers,
+                                        "Hide Players in lobby"
+                                )))
                 )
-        );
+                .then(ClientCommandManager.literal("hitbox")
+                        .executes(ctx -> toggle(
+                                () -> ClubtimizerConfig.getLobby().hitboxes,
+                                ClubtimizerConfig::setLobbyHitboxes,
+                                "Turn on hitboxes when connecting"
+                        ))
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx -> setToggle(true,
+                                        ClubtimizerConfig::setLobbyHitboxes,
+                                        "Turn on hitboxes when connecting"
+                                )))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx -> setToggle(false,
+                                        ClubtimizerConfig::setLobbyHitboxes,
+                                        "Turn on hitboxes when connecting"
+                                )))
+                )
+                .then(ClientCommandManager.literal("hidechat")
+                        .executes(ctx -> toggle(
+                                () -> ClubtimizerConfig.getLobby().hideChat,
+                                ClubtimizerConfig::setLobbyHideChat,
+                                "Hide Chat in lobby"
+                        ))
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx -> setToggle(true,
+                                        ClubtimizerConfig::setLobbyHideChat,
+                                        "Hide Chat in lobby"
+                                )))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx -> setToggle(false,
+                                        ClubtimizerConfig::setLobbyHideChat,
+                                        "Hide Chat in lobby"
+                                )))
+                );
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
@@ -187,19 +222,6 @@ public class ClubtimizerCommand {
                                     return b.buildFuture();
                                 })
                                 .executes(ClubtimizerCommand::executeRemoveAutoResponseRule)));
-    }
-
-    private static LiteralArgumentBuilder<FabricClientCommandSource> literalToggleGroup(
-            String[][] keys,
-            List<Consumer<Boolean>> setters,
-            List<Supplier<Boolean>> getters) {
-
-        LiteralArgumentBuilder<FabricClientCommandSource> base = ClientCommandManager.literal("lobby");
-
-        for (int i = 0; i < keys.length; i++) {
-            base.then(toggleSub(keys[i][0], getters.get(i), setters.get(i), keys[i][1]));
-        }
-        return base;
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> literalToggleGroupRoot(
