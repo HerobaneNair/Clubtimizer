@@ -11,6 +11,8 @@ import java.util.List;
 
 public class Tablist {
 
+    public static boolean noBetterPing = true;
+
     public static String removeMs(String s) {
         if (!s.contains("ms")) return s;
         int idx = s.indexOf("ms");

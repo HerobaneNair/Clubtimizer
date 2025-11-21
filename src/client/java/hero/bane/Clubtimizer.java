@@ -2,6 +2,7 @@ package hero.bane;
 
 import hero.bane.auto.Requeue;
 import hero.bane.auto.Spectator;
+import hero.bane.auto.Tablist;
 import hero.bane.auto.TotemResetter;
 import hero.bane.command.ClubtimizerCommand;
 import hero.bane.config.ClubtimizerConfig;
@@ -10,6 +11,7 @@ import hero.bane.state.MCPVPStateChanger;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.slf4j.Logger;
@@ -52,6 +54,8 @@ public class Clubtimizer implements ClientModInitializer {
             }
         });
         TotemResetter.initReflection();
+
+        Tablist.noBetterPing = !FabricLoader.getInstance().isModLoaded("betterpingdisplay");
     }
 
     private static void updateIp(MinecraftClient c) {

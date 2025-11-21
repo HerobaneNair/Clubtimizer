@@ -46,7 +46,7 @@ public abstract class PlayerListHudMixin {
             return;
         }
 
-        if (!FabricLoader.getInstance().isModLoaded("betterpingdisplay")) {
+        if (Tablist.noBetterPing) {
             ci.cancel();
 
             String text = latency + "ms";
