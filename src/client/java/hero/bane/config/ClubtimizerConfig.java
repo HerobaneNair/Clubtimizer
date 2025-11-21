@@ -94,14 +94,26 @@ public class ClubtimizerConfig {
         public boolean roundEnabled;
         public String message = "gg";
         public List<String> triggers =
-                new ArrayList<>(List.of("g", "gg", "ggs", "ggg", "gs", "gggg"));
+                new ArrayList<>(List.of(
+                        "g",
+                        "gg",
+                        "ggs",
+                        "ggg",
+                        "gs",
+                        "gggg",
+                        "ggwp",
+                        "wp"
+                ));
     }
 
     public static class AutoCopeConfig {
         public boolean enabled;
         public List<String> phrases =
-                new ArrayList<>(List.of("I ghosted", "You're so lucky",
-                        "This wouldn't have happened if HerobaneNair didn't hack my computer"));
+                new ArrayList<>(List.of(
+                        "I ghosted",
+                        "You're so lucky",
+                        "This wouldn't have happened if HerobaneNair didn't hack my computer"
+                ));
     }
 
     public static class AutoResponseConfig {
