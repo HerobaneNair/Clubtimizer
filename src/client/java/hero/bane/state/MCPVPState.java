@@ -11,9 +11,9 @@ public enum MCPVPState {
     BLUE,
     PICKING_TEAM,
     SPECTATING,
+    LOADING_IN,
     LOBBY,
     IN_QUEUE,
-    LOADING_IN,
     LIMBO,
     NONE
 }

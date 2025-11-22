@@ -38,13 +38,6 @@ public class MCPVPStateChanger {
         IN_SPEC_MAP[MCPVPState.TEAMFIGHT_RED_DEAD.ordinal()] = true;
     }
 
-
-    static {
-        for (MCPVPState s : IN_GAME_VALUES) {
-            IN_GAME_MAP[s.ordinal()] = true;
-        }
-    }
-
     private static boolean inGame = false;
     private static boolean inLobby = false;
     private static boolean inSpec = false;
@@ -128,6 +121,7 @@ public class MCPVPStateChanger {
     }
 
     private static boolean checkLoadingIn(BlockPos pos) {
+        //-10000.0 255.0 -10000.0
         if (((pos.getX() + 10000.0) < 2.5) &&
                 ((pos.getY() - 255.0) < 2.5) &&
                 ((pos.getZ() + 10000.0) < 2.5)) {

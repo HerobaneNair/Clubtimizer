@@ -27,25 +27,16 @@ public class EntityRenderDispatcherMixin {
             at = @At("HEAD"),
             cancellable = true
     )
-    private void club$hidePlayers(
-            Entity entity,
-            double x, double y, double z,
-            float tickProgress,
-            MatrixStack matrices,
-            VertexConsumerProvider vertexConsumers,
-            int light,
-            CallbackInfo ci
-    ) {
-
+    private void club$hidePlayers(Entity entity, double x, double y, double z, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         if (Spectator.isFollowing(entity)
                 && Clubtimizer.client.options.getPerspective().isFirstPerson()) {
             ci.cancel();
             return;
         }
 
-        if (entity instanceof DisplayEntity.TextDisplayEntity td
+        if (entity instanceof DisplayEntity.TextDisplayEntity textDisplayEntity
                 && Clubtimizer.client.options.getPerspective().isFirstPerson()
-                && Spectator.isFollowing(td.getVehicle())) {
+                && Spectator.isFollowing(textDisplayEntity.getVehicle())) {
             ci.cancel();
             return;
         }
