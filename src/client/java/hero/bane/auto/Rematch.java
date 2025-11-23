@@ -7,6 +7,7 @@ import hero.bane.util.ChatUtil;
 import hero.bane.util.TextUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 
 import java.util.List;
 
@@ -15,8 +16,7 @@ public class Rematch {
 
     private static final String CLICK_FINAL = "[Click to Rematch ";
     private static final String OPEN_FINAL = "Click to open chat with ";
-    private static final Style REMATCH_COLOR = Style.EMPTY.withColor(0x55FFFF);
-    private static final Style HOVER_COLOR = Style.EMPTY.withColor(0xBB33DD);
+    private static final Style REMATCH_COLOR = Style.EMPTY.withColor(Formatting.LIGHT_PURPLE);
 
     public static void handleMessage(String text) {
         if (!TextUtil.roundEnd(text, false) || triggered) return;
@@ -38,7 +38,7 @@ public class Rematch {
                 .append(Text.literal("]").setStyle(REMATCH_COLOR));
 
         MutableText hovered = Text.literal("")
-                .append(Text.literal(OPEN_FINAL).setStyle(HOVER_COLOR))
+                .append(Text.literal(OPEN_FINAL).setStyle(REMATCH_COLOR))
                 .append(TextUtil.rainbowGradient("/duel " + opponent));
 
         clickable.setStyle(

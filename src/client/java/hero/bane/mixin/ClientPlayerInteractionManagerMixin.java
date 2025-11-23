@@ -23,7 +23,7 @@ public class ClientPlayerInteractionManagerMixin {
         if (player == null) return;
 
         if (MCPVPStateChanger.inLobby()) {
-            if (player.getOffHandStack().isOf(Items.WIND_CHARGE)) {
+            if (player.getOffHandStack().isOf(Items.WIND_CHARGE) && player.getMainHandStack().isEmpty()) {
                 boolean wasSneaking = player.isSneaking();
                 player.setSneaking(true);
                 ActionResult result = ((ClientPlayerInteractionManager) (Object) this)

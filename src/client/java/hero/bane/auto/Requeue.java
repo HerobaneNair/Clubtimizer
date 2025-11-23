@@ -19,6 +19,7 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 
 import java.util.ArrayDeque;
@@ -51,7 +52,7 @@ public final class Requeue {
     private static String[] cachedNames = GAMEMODES.clone();
 
     private static final MutableText qPrefix =
-            Text.literal("Queued into:").styled(s -> s.withColor(0x55FFFF));
+            Text.literal("Attempted queued into:").styled(s -> s.withColor(Formatting.AQUA));
 
     private static String expectedMenuTitle = "";
 
