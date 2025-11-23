@@ -14,12 +14,7 @@ public class AutoGG {
         var cfg = ClubtimizerConfig.getAutoGG();
         if (!cfg.enabled || !MCPVPStateChanger.inGame()) return;
 
-        var player = Clubtimizer.player;
-        if (player != null) {
-            double x = player.getX();
-            double z = player.getZ();
-            if (x >= -300 && x <= 300 && z >= -300 && z <= 300) return;
-        }
+        if (inSpawn()) return;
 
         long now = System.currentTimeMillis();
         boolean messageWorks = TextUtil.roundEnd(text, cfg.roundEnabled);
@@ -68,5 +63,14 @@ public class AutoGG {
 
     public static void resetReactionWindowEnd() {
         reactionWindowEnd = System.currentTimeMillis();
+    }
+
+    public static boolean inSpawn() {
+        var clientPlayer = Clubtimizer.player;
+        if (clientPlayer != null) {
+            double clientx = clientPlayer.getX(), clientz = clientPlayer.getZ();
+            return !(clientx >= -300) || !(clientx <= 300) || !(clientz >= -300) || !(clientz <= 300);
+        }
+        return true;
     }
 }

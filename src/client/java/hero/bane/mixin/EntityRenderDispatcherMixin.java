@@ -1,6 +1,7 @@
 package hero.bane.mixin;
 
 import hero.bane.Clubtimizer;
+import hero.bane.action.AutoGG;
 import hero.bane.auto.Requeue;
 import hero.bane.auto.Spectator;
 import hero.bane.config.ClubtimizerConfig;
@@ -49,6 +50,7 @@ public class EntityRenderDispatcherMixin {
             if (FriendUtil.isFriend(extractName(player.getName().getString()))) return;
             if (isNPC(player)) return;
             if (Requeue.isInsideCylinder(player)) return;
+            if (AutoGG.inSpawn()) return;
 
             ci.cancel();
             return;
