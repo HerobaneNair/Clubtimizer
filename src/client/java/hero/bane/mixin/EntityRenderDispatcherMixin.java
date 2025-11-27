@@ -50,7 +50,7 @@ public class EntityRenderDispatcherMixin {
             if (FriendUtil.isFriend(extractName(player.getName().getString()))) return;
             if (isNPC(player)) return;
             if (Requeue.isInsideCylinder(player)) return;
-            if (AutoGG.inSpawn()) return;
+            if (!AutoGG.inSpawn()) return;
 
             ci.cancel();
             return;
@@ -65,6 +65,7 @@ public class EntityRenderDispatcherMixin {
             if (FriendUtil.isFriend(extractName(player.getName().getString()))) return;
             if (isNPC(player)) return;
             if (Requeue.isInsideCylinder(player)) return;
+            if (!AutoGG.inSpawn()) return;
 
             ci.cancel();
         }

@@ -240,9 +240,10 @@ public class TextUtil {
     }
 
     public static boolean roundEnd(String text, boolean roundCheck) {
-        return text.contains("⚔ Match Complete")
-                || (roundCheck &&
-                (text.contains("won the round") && text.contains("\uD83D\uDDE1") ||
-                        text.equals("Draw!")));
+        text = text.trim();
+        if (text.contains("⚔ Match Complete")) return true;
+        if (text.equals("Draw!")) return true;
+        if (!roundCheck) return false;
+        return (text.contains("won the round") && !text.contains("»"));
     }
 }

@@ -8,7 +8,7 @@ import hero.bane.util.TextUtil;
 
 public class AutoGG {
     private static long reactionWindowEnd = 0;
-    private static boolean unsentGG = true;
+    private static boolean sentGG = true;
 
     public static void handleMessage(String text) {
         var cfg = ClubtimizerConfig.getAutoGG();
@@ -20,13 +20,13 @@ public class AutoGG {
         boolean messageWorks = TextUtil.roundEnd(text, cfg.roundEnabled);
 
         if (messageWorks) {
-            unsentGG = false;
+            sentGG = false;
             if (!cfg.reactionary && now > reactionWindowEnd) ChatUtil.delayedChat(cfg.message);
             reactionWindowEnd = now + 10000L;
             return;
         }
 
-        if (!cfg.reactionary || unsentGG) return;
+        if (!cfg.reactionary || sentGG) return;
 
         int arrowIndex = text.indexOf('»');
         if (arrowIndex < 0) return;
@@ -48,7 +48,7 @@ public class AutoGG {
 
         if (isTrigger(cleaned) && now < reactionWindowEnd) {
             ChatUtil.chat(cfg.message);
-            unsentGG = true;
+            sentGG = true;
         }
     }
 
@@ -68,8 +68,8 @@ public class AutoGG {
     public static boolean inSpawn() {
         var clientPlayer = Clubtimizer.player;
         if (clientPlayer != null) {
-            double clientx = clientPlayer.getX(), clientz = clientPlayer.getZ();
-            return !(clientx >= -300) || !(clientx <= 300) || !(clientz >= -300) || !(clientz <= 300);
+            double x = clientPlayer.getX(), z = clientPlayer.getZ();
+            return ((x > -300) && (x < 300) && (z > -300) && (z < 300));
         }
         return true;
     }
