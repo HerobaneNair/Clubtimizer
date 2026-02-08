@@ -15,7 +15,7 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "hero.bane.Clubtimizer"
+      "hero.bane.clubtimizer.Clubtimizer"
     ]
   },
   "mixins": [

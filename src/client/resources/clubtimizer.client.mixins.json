@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "hero.bane.mixin",
+  "package": "hero.bane.clubtimizer.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
     "ChatHudMixin",
