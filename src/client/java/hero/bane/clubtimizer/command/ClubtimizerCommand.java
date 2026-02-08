@@ -13,7 +13,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Util;
 
 import java.io.File;
@@ -117,8 +117,8 @@ public class ClubtimizerCommand {
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
         return ClientCommandManager.literal("stateGet")
                 .executes(ctx -> {
-                    ClientPlayerEntity player = Clubtimizer.player;
-                    if (player == null || Clubtimizer.client.world == null) return 0;
+                    LocalPlayer player = Clubtimizer.player;
+                    if (player == null || Clubtimizer.client.level == null) return 0;
                     MCPVPState state = MCPVPStateChanger.get();
                     say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
                     return 1;
@@ -130,10 +130,11 @@ public class ClubtimizerCommand {
                 .then(ClientCommandManager.literal("open").executes(ctx -> {
                     File f = new File(FabricLoader.getInstance().getConfigDir().toFile(), "clubtimizer.json");
                     try {
-                        Util.getOperatingSystem().open(f);
+                        Util.getPlatform().openFile(f);
                         say("Opened config file", 0x55FFFF);
                     } catch (Exception e) {
                         say("Failed to open config: " + e.getMessage(), 0xFF5555);
+                        Clubtimizer.LOGGER.error("Failed to open config: ", e);
                     }
                     return 1;
                 }))

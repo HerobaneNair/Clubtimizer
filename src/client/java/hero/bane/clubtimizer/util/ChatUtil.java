@@ -1,26 +1,27 @@
 package hero.bane.clubtimizer.util;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.TimeUnit;
 
 import static hero.bane.clubtimizer.Clubtimizer.client;
 
 public class ChatUtil {
-    public static final Text PREFIX =
-            Text.literal("[")
-                    .styled(s -> s.withColor(0xAAAAAA)).append(
-                            Text.literal("Club")
-                                    .styled(s -> s.withColor(0xFFFFFF))).append(
-                            Text.literal("timizer")
-                                    .styled(s -> s.withColor(0xFF5555))).append(
-                            Text.literal("] ")
-                                    .styled(s -> s.withColor(0xAAAAAA)));
+
+    public static final Component PREFIX =
+            Component.literal("[")
+                    .withStyle(s -> s.withColor(0xAAAAAA))
+                    .append(Component.literal("Club")
+                            .withStyle(s -> s.withColor(0xFFFFFF)))
+                    .append(Component.literal("timizer")
+                            .withStyle(s -> s.withColor(0xFF5555)))
+                    .append(Component.literal("] ")
+                            .withStyle(s -> s.withColor(0xAAAAAA)));
 
     private static boolean invalidClient() {
-        return client == null || client.player == null || client.player.networkHandler == null;
+        return client == null || client.player == null;
     }
 
     public static void delayedSay(String message, int color, long delayMs) {
@@ -28,13 +29,12 @@ public class ChatUtil {
     }
 
     public static void delayedSay(String message, int color) {
-        delayedSay(message, color, true,100);
+        delayedSay(message, color, true, 100);
     }
 
     public static void delayedSay(String message, int color, boolean prepend, long delayMs) {
         Clubtimizer.executor.schedule(() -> say(message, color, prepend), delayMs, TimeUnit.MILLISECONDS);
     }
-
 
     public static void say(String message) {
         say(message, 0xFFFFFF, true);
@@ -46,51 +46,57 @@ public class ChatUtil {
 
     public static void say(String message, int color, boolean prepend) {
         if (invalidClient()) return;
-        ClientPlayerEntity player = client.player;
+
+        LocalPlayer player = client.player;
+        Component msg = Component.literal(message).withStyle(s -> s.withColor(color));
+
         if (prepend) {
-            player.sendMessage(PREFIX.copy().append(Text.literal(message).styled(s -> s.withColor(color))), false);
+            player.displayClientMessage(PREFIX.copy().append(msg), false);
         } else {
-            player.sendMessage(Text.literal(message).styled(s -> s.withColor(color)), false);
+            player.displayClientMessage(msg, false);
         }
     }
 
-    public static void delayedSay(Text text, long delayMs) {
+    public static void delayedSay(Component text, long delayMs) {
         Clubtimizer.executor.schedule(() -> say(text), delayMs, TimeUnit.MILLISECONDS);
     }
 
-    public static void delayedSay(Text text) {
+    public static void delayedSay(Component text) {
         delayedSay(text, 100);
     }
 
-    public static void delayedSay(Text text, boolean prepend, long delayMs) {
+    public static void delayedSay(Component text, boolean prepend, long delayMs) {
         Clubtimizer.executor.schedule(() -> say(text, prepend), delayMs, TimeUnit.MILLISECONDS);
     }
 
-    public static void delayedSay(Text text, boolean prepend) {
+    public static void delayedSay(Component text, boolean prepend) {
         delayedSay(text, prepend, 100);
     }
 
-    public static void say(Text text) {
+    public static void say(Component text) {
         say(text, true);
     }
 
-    public static void say(Text text, boolean prepend) {
+    public static void say(Component text, boolean prepend) {
         if (invalidClient()) return;
 
-        ClientPlayerEntity player = client.player;
+        LocalPlayer player = client.player;
         if (prepend) {
-            player.sendMessage(PREFIX.copy().append(text.copy()), false);
+            player.displayClientMessage(PREFIX.copy().append(text.copy()), false);
         } else {
-            player.sendMessage(text.copy(), false);
+            player.displayClientMessage(text.copy(), false);
         }
     }
 
     public static void chat(String message) {
         if (invalidClient()) return;
+
         if (message.charAt(0) == '/') {
-            command((message));
+            command(message);
+            return;
         }
-        client.player.networkHandler.sendChatMessage(message);
+
+        client.player.connection.sendChat(message);
     }
 
     public static void delayedChat(String message, long delayMs) {
@@ -103,9 +109,11 @@ public class ChatUtil {
 
     private static void command(String message) {
         if (invalidClient()) return;
+
         if (message.charAt(0) == '/') {
             message = message.substring(1);
         }
-        Clubtimizer.player.networkHandler.sendCommand(message);
+
+        Clubtimizer.player.connection.sendCommand(message);
     }
 }

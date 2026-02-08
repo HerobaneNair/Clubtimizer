@@ -6,13 +6,13 @@ import hero.bane.clubtimizer.action.AutoHush;
 import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.TotemReset;
 import hero.bane.clubtimizer.mixin.accessor.PlayerListHudAccessor;
-import hero.bane.clubtimizer.util.FriendUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 import hero.bane.clubtimizer.util.TextUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.PlayerListHud;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -58,10 +58,10 @@ public class MCPVPStateChanger {
     }
 
     public static void update() {
-        MinecraftClient client = Clubtimizer.client;
+        Minecraft client = Clubtimizer.client;
         var player = client.player;
-        var world = client.world;
-        ClientPlayNetworkHandler net = client.getNetworkHandler();
+        var world = client.level;
+        ClientPacketListener net = client.getConnection();
 
         boolean valid =
                 player != null &&
@@ -86,7 +86,7 @@ public class MCPVPStateChanger {
         boolean matched =
                 checkLimbo(net) ||
                         checkSpectating(actionbar) ||
-                        checkLoadingIn(player.getBlockPos()) ||
+                        checkLoadingIn(player.blockPosition()) ||
                         checkFFA(tab, spectator) ||
                         checkPicking(scoreboardLines) ||
                         checkDuel(tab, scoreboardLines, playerName) ||
@@ -102,9 +102,9 @@ public class MCPVPStateChanger {
         inSpec = IN_SPEC_MAP[current.ordinal()];
     }
 
-    private static boolean checkLimbo(ClientPlayNetworkHandler net) {
-        String brand = Objects.requireNonNull(net).getBrand();
-        if (brand != null && brand.contains("Limbo")) {
+    private static boolean checkLimbo(ClientPacketListener net) {
+        String brand = Objects.requireNonNull(net.getServerData()).name;
+        if (brand.contains("Limbo")) {
             setState(MCPVPState.LIMBO);
             return true;
         }
@@ -113,8 +113,7 @@ public class MCPVPStateChanger {
 
     private static boolean checkSpectating(String actionbar) {
         if (actionbar == null) return false;
-        String lower = actionbar.toLowerCase();
-        if (lower.contains("currently spectating")) {
+        if (actionbar.toLowerCase().contains("currently spectating")) {
             setState(MCPVPState.SPECTATING);
             return true;
         }
@@ -122,10 +121,9 @@ public class MCPVPStateChanger {
     }
 
     private static boolean checkLoadingIn(BlockPos pos) {
-        //-10000.0 255.0 -10000.0
-        if (((pos.getX() + 10000.0) < 2.5) &&
-                ((pos.getY() - 255.0) < 2.5) &&
-                ((pos.getZ() + 10000.0) < 2.5)) {
+        if ((pos.getX() + 10000.0 < 2.5) &&
+                (pos.getY() - 255.0 < 2.5) &&
+                (pos.getZ() + 10000.0 < 2.5)) {
             setState(MCPVPState.LOADING_IN);
             return true;
         }
@@ -171,8 +169,6 @@ public class MCPVPStateChanger {
             } else if (line.contains("§c")) {
                 setState(MCPVPState.RED);
                 return true;
-            } else {
-                LOGGER.info(line);
             }
         }
         return false;
@@ -191,17 +187,9 @@ public class MCPVPStateChanger {
             if (!line.contains(flag)) continue;
 
             if (line.contains("§#1FA5FF")) {
-                if(current == MCPVPState.BLUE) {
-                    setState(MCPVPState.BLUE);
-                    return true;
-                }
                 setState(spectator ? MCPVPState.TEAMFIGHT_BLUE_DEAD : MCPVPState.TEAMFIGHT_BLUE);
                 return true;
             } else if (line.contains("§c")) {
-                if(current == MCPVPState.RED) {
-                    setState(MCPVPState.RED);
-                    return true;
-                }
                 setState(spectator ? MCPVPState.TEAMFIGHT_RED_DEAD : MCPVPState.TEAMFIGHT_RED);
                 return true;
             }
@@ -209,9 +197,9 @@ public class MCPVPStateChanger {
         return false;
     }
 
-    private static boolean checkLobby(MinecraftClient client, String actionbar) {
-        PlayerListHud hud = client.inGameHud.getPlayerListHud();
-        Text footer = ((PlayerListHudAccessor) hud).getFooter();
+    private static boolean checkLobby(Minecraft client, String actionbar) {
+        PlayerTabOverlay tabList = client.gui.getTabList();
+        Component footer = ((PlayerListHudAccessor) tabList).getFooter();
         if (footer == null) return false;
 
         String f = TextUtil.toLegacyString(footer);
@@ -227,15 +215,9 @@ public class MCPVPStateChanger {
         return true;
     }
 
-    public static boolean inGame() {
-        return inGame;
-    }
-
-    public static boolean inLobby() {
-        return inLobby;
-    }
-
-    public static boolean inSpec() {return inSpec;}
+    public static boolean inGame() { return inGame; }
+    public static boolean inLobby() { return inLobby; }
+    public static boolean inSpec() { return inSpec; }
 
     private static void onLobby() {
         AutoHush.matchJoin = true;
@@ -243,6 +225,6 @@ public class MCPVPStateChanger {
         Rematch.triggered = false;
         AutoGG.resetReactionWindowEnd();
         TotemReset.resetCounter();
-        FriendUtil.requestUpdate();
+        PlayerUtil.requestUpdate();
     }
 }

@@ -6,11 +6,10 @@ import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PingUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,7 @@ public class Spectator {
     private static final List<String> aliveList = new ArrayList<>();
     private static long lastTick = -1L;
 
-    private static PlayerEntity followed = null;
+    private static Player followed = null;
     private static long lastTeleport = 0L;
     private static long followPauseUntil = 0L;
     private static boolean roundEnded = false;
@@ -40,14 +39,25 @@ public class Spectator {
         return new ArrayList<>(aliveList);
     }
 
-    public static PlayerListEntry findEntryByCleanName(String cleanName) {
-        if (Clubtimizer.client == null || Clubtimizer.client.getNetworkHandler() == null)
+    public static PlayerInfo findInfoByCleanName(String cleanName) {
+        if (Clubtimizer.client == null || Clubtimizer.client.getConnection() == null)
             return null;
-        for (PlayerListEntry e : Clubtimizer.client.getNetworkHandler().getListedPlayerListEntries()) {
-            if (e.getDisplayName() == null) continue;
-            String stripped = TextUtil.stripFormatting(TextUtil.toLegacyString(e.getDisplayName())).trim();
-            String[] parts = stripped.split(" ");
-            if (parts.length >= 2 && parts[1].equals(cleanName)) return e;
+
+        for (PlayerInfo info : Clubtimizer.client.getConnection().getListedOnlinePlayers()) {
+            ComponentSafe:
+            {
+                if (info.getTabListDisplayName() == null) break ComponentSafe;
+
+                String stripped =
+                        TextUtil.stripFormatting(
+                                TextUtil.toLegacyString(info.getTabListDisplayName())
+                        ).trim();
+
+                String[] parts = stripped.split(" ");
+                if (parts.length >= 2 && parts[1].equals(cleanName)) {
+                    return info;
+                }
+            }
         }
         return null;
     }
@@ -57,7 +67,7 @@ public class Spectator {
     }
 
     public static void startFollowing(Entity target) {
-        if (!(target instanceof PlayerEntity p)) return;
+        if (!(target instanceof Player p)) return;
         followed = p;
         Clubtimizer.client.setCameraEntity(p);
         lastTeleport = 0L;
@@ -71,27 +81,32 @@ public class Spectator {
         }
     }
 
-    private static String cleanName(PlayerEntity p) {
-        if (Clubtimizer.client == null || Clubtimizer.client.getNetworkHandler() == null)
-            return p.getName().getString();
-        PlayerListEntry entry = Clubtimizer.client.getNetworkHandler().getPlayerListEntry(p.getUuid());
-        if (entry == null || entry.getDisplayName() == null)
+    private static String cleanName(Player p) {
+        if (Clubtimizer.client == null || Clubtimizer.client.getConnection() == null)
             return p.getName().getString();
 
-        String stripped = TextUtil.stripFormatting(TextUtil.toLegacyString(entry.getDisplayName())).trim();
+        PlayerInfo info = Clubtimizer.client.getConnection().getPlayerInfo(p.getUUID());
+        if (info == null || info.getTabListDisplayName() == null)
+            return p.getName().getString();
+
+        String stripped =
+                TextUtil.stripFormatting(
+                        TextUtil.toLegacyString(info.getTabListDisplayName())
+                ).trim();
+
         String[] parts = stripped.split(" ");
         return parts.length >= 2 ? parts[1] : p.getName().getString();
     }
 
     public static void handleTick() {
-        MinecraftClient client = Clubtimizer.client;
+        Minecraft client = Clubtimizer.client;
 
         if (followed == null || client.player == null) {
             stopFollowing();
             return;
         }
 
-        if (!MCPVPStateChanger.inSpec() || client.options.sneakKey.isPressed()) {
+        if (!MCPVPStateChanger.inSpec() || client.options.keyShift.isDown()) {
             stopFollowing();
             return;
         }
@@ -108,27 +123,32 @@ public class Spectator {
             return;
         }
 
-        assert client.world != null;
-        boolean entityLoaded = client.world.getPlayers().contains((AbstractClientPlayerEntity) followed);
+        if (client.level == null) {
+            stopFollowing();
+            return;
+        }
+
+        boolean entityLoaded = client.level.players().contains(followed);
         if (!entityLoaded) {
             ChatUtil.chat("/tp " + clean);
             return;
         }
 
-        double distSq = client.player.squaredDistanceTo(followed);
+        double distSq = client.player.distanceToSqr(followed);
         if (distSq > (256 * 256)) {
             ChatUtil.chat("/tp " + clean);
             return;
         }
 
-        long now = System.currentTimeMillis();
-
         teleportToTarget(client);
 
-        if (now >= followPauseUntil) client.setCameraEntity(followed);
+        long now = System.currentTimeMillis();
+        if (now >= followPauseUntil) {
+            client.setCameraEntity(followed);
+        }
     }
 
-    private static void teleportToTarget(MinecraftClient client) {
+    private static void teleportToTarget(Minecraft client) {
         if (client.player == null || followed == null) return;
 
         long now = System.currentTimeMillis();
@@ -136,14 +156,17 @@ public class Spectator {
 
         lastTeleport = now;
 
-        client.player.setPos(followed.getX(), followed.getY(), followed.getZ());
+        client.player.setPos(
+                followed.getX(),
+                followed.getY(),
+                followed.getZ()
+        );
+
         soundFixer(client);
 
         double ping = PingUtil.parseScoreboardPing(client);
         followPauseUntil = now + (long)(ping * 2.8);
     }
-
-
 
     public static void handleMessage(String text) {
         if (!MCPVPStateChanger.inSpec()) return;
@@ -161,7 +184,7 @@ public class Spectator {
         }
     }
 
-    private static void soundFixer(MinecraftClient client) {
+    private static void soundFixer(Minecraft client) {
         if (client.player == null || followed == null) return;
 
         Entity original = followed;
@@ -180,5 +203,4 @@ public class Spectator {
             }
         }
     }
-
 }

@@ -12,8 +12,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
+import net.minecraft.client.player.LocalPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,26 +27,31 @@ public class Clubtimizer implements ClientModInitializer {
     public static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     public static String ip = "_";
     public static int temp1 = 0;
-    public static MinecraftClient client;
-    public static ClientPlayerEntity player;
+    public static Minecraft client;
+    public static LocalPlayer player;
     public static String playerName = "";
 
     @Override
     public void onInitializeClient() {
-        client = MinecraftClient.getInstance();
+        client = Minecraft.getInstance();
         player = client.player;
         if (player != null) playerName = player.getName().getString();
+
         ClubtimizerCommand.register();
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, c) -> updateIp(c));
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, c) -> {
+
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, minecraft) -> updateIp(minecraft));
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, minecraft) -> {
             MCPVPStateChanger.update();
             ip = "_";
         });
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+
+        ClientTickEvents.END_CLIENT_TICK.register(minecraft -> {
             Spectator.handleTick();
-            Requeue.handleTick(client);
-            if (client.player != null && client.world != null) {
-                long t = client.world.getTime();
+            Requeue.handleTick(minecraft);
+
+            if (minecraft.player != null && minecraft.level != null) {
+                long t = minecraft.level.getGameTime();
                 if (MCPVPStateChanger.get() != MCPVPState.NONE) {
                     if (t % 5 == 0) MCPVPStateChanger.update();
                 } else {
@@ -53,23 +59,28 @@ public class Clubtimizer implements ClientModInitializer {
                 }
             }
         });
+
         TotemReset.initReflection();
 
         Tablist.noBetterPing = !FabricLoader.getInstance().isModLoaded("betterpingdisplay");
     }
 
-    private static void updateIp(MinecraftClient c) {
+    private static void updateIp(Minecraft minecraft) {
         MCPVPStateChanger.update();
-        var entry = c.getCurrentServerEntry();
+
+        var entry = minecraft.getCurrentServer();
         if (entry != null) {
-            ip = entry.address.toLowerCase();
-            player = c.player;
+            ip = entry.ip.toLowerCase();
+            player = minecraft.player;
             if (player != null) playerName = player.getName().getString();
+
             if (ip.contains("mcpvp") && ClubtimizerConfig.getLobby().hitboxes) {
                 LOGGER.info("[Clubtimizer] Connected to: {}", ip);
-                c.getEntityRenderDispatcher().setRenderHitboxes(true);
+                if (!minecraft.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
+                    minecraft.debugEntries.toggleStatus(DebugScreenEntries.ENTITY_HITBOXES);
+                }
             }
-        } else if (c.isIntegratedServerRunning()) {
+        } else if (minecraft.isLocalServer()) {
             ip = "_sp";
         } else {
             ip = "_";
