@@ -134,6 +134,7 @@ public class ClubtimizerCommand {
                         say("Opened config file", 0x55FFFF);
                     } catch (Exception e) {
                         say("Failed to open config: " + e.getMessage(), 0xFF5555);
+                        Clubtimizer.LOGGER.error("Failed to open config:", e);
                     }
                     return 1;
                 }))
