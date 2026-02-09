@@ -29,7 +29,7 @@ public class Tablist {
     }
 
     public static void process(List<PlayerInfo> entries, long tick) {
-        List<String> daggerNames = new ArrayList<>();
+        List<String> aliveNames = new ArrayList<>();
 
         for (PlayerInfo entry : entries) {
             Component disp = entry.getTabListDisplayName();
@@ -54,10 +54,10 @@ public class Tablist {
             if (legacyFull.contains("🗡")) {
                 String stripped = TextUtil.stripFormatting(legacyFull).trim();
                 String[] parts = stripped.split(" ");
-                if (parts.length >= 2) daggerNames.add(parts[1]);
+                if (parts.length >= 2) aliveNames.add(parts[1]);
             }
         }
 
-        Spectator.updateAlivelist(daggerNames, tick);
+        Spectator.updateAlivelist(aliveNames, tick);
     }
 }

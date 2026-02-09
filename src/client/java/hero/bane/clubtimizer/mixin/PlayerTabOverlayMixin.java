@@ -15,6 +15,7 @@ import net.minecraft.world.scores.Scoreboard;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,6 +28,9 @@ public abstract class PlayerTabOverlayMixin {
     @Shadow
     protected abstract List<PlayerInfo> getPlayerInfos();
 
+    @Unique
+    private long lastTick = -1L;
+
     @Inject(method = "render", at = @At("HEAD"))
     private void club$processTablist(
             GuiGraphics graphics,
@@ -38,12 +42,25 @@ public abstract class PlayerTabOverlayMixin {
         if (!(MCPVPStateChanger.inGame()
                 || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) return;
 
-        long tick = Clubtimizer.client.level != null
-                ? Clubtimizer.client.level.getGameTime()
-                : 0L;
+        assert Clubtimizer.client.level != null;
+        long tick = Clubtimizer.client.level.getGameTime();
+        if (tick == lastTick) return;
+        lastTick = tick;
+
+        //Maybe only update every 4 ticks for added optimization not sure
+        //if (tick > lastTick + 4) return;
 
         List<PlayerInfo> list = this.getPlayerInfos();
-        Tablist.process(list, tick);
+        int size = list.size();
+        if (size == 0) return;
+
+        /*
+        * Limits to 80 people - it should only be that max rendered on tab list I think
+        * might be diff w/ a big tab list mod
+        * but it helps with processing
+         */
+        int limit = Math.min(size, 80);
+        Tablist.process(list.subList(0, limit), tick);
     }
 
     @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)
