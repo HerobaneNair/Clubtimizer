@@ -15,7 +15,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Util;
-import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
 
 import java.io.File;
 import java.util.function.Consumer;
