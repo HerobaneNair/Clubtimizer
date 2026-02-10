@@ -242,9 +242,9 @@ public class ClubtimizerCommand {
                                             var rule = ClubtimizerConfig.getAutoResponse().rules.get(index);
                                             if (rule == null) return 0;
                                             say("-----");
-                                            say("Rule #" + index, 0xFFFFFF, false);
+                                            say("Rule #" + index, 0xAAAAAA, false);
                                             say(String.join(" | ", rule.from), 0xFFCCAA, false);
-                                            say("goes to", 0xFFFFFF, false);
+                                            say("goes to", 0xAAAAAA, false);
                                             say(String.join(" | ", rule.to), 0xAAFFAA, false);
                                             say("-----");
                                             return 1;
