@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
-public class AutoHush {
+public class Hush {
     public static boolean matchJoin = true;
     public static boolean allowLobbyJoin = false;
 
@@ -42,7 +42,7 @@ public class AutoHush {
 
         if (lower.contains("§#1fa5ff »")) {
             String cleaned = TextUtil.stripFormatting(afterArrow).trim().toLowerCase();
-            boolean isTrigger = AutoGG.isTrigger(cleaned) || cleaned.equals("ss");
+            boolean isTrigger = GG.isTrigger(cleaned) || cleaned.equals("ss");
             if (cfg.allowSS && isTrigger) return msg;
             return buildHidden(beforeArrow, afterArrow, true);
         }

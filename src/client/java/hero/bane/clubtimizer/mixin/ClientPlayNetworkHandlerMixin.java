@@ -1,8 +1,8 @@
 package hero.bane.clubtimizer.mixin;
 
-import hero.bane.clubtimizer.action.AutoCope;
-import hero.bane.clubtimizer.action.AutoGG;
-import hero.bane.clubtimizer.action.AutoResponse;
+import hero.bane.clubtimizer.action.Cope;
+import hero.bane.clubtimizer.action.GG;
+import hero.bane.clubtimizer.action.Response;
 import hero.bane.clubtimizer.auto.PartyMaker;
 import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.Spectator;
@@ -32,12 +32,12 @@ public class ClientPlayNetworkHandlerMixin {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
 
         Component original = packet.content();
-        String legacyString = TextUtil.toLegacyString(original);
+//        String legacyString = TextUtil.toLegacyString(original);
         String noFormatting = original.getString();
 
-        AutoResponse.handleMessage(legacyString, noFormatting);
-        AutoCope.handleMessage(noFormatting);
-        AutoGG.handleMessage(noFormatting);
+        Response.handleMessage(noFormatting);
+        Cope.handleMessage(noFormatting);
+        GG.handleMessage(noFormatting);
         PartyMaker.handleMessage(noFormatting);
         Rematch.handleMessage(noFormatting);
         Spectator.handleMessage(noFormatting);

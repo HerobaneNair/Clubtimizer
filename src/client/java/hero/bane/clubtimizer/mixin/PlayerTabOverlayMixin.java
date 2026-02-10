@@ -25,11 +25,17 @@ import java.util.List;
 @Mixin(PlayerTabOverlay.class)
 public abstract class PlayerTabOverlayMixin {
 
+    @Unique
+    private static final int TAB_MAX_RENDERED = 80;
+
     @Shadow
     protected abstract List<PlayerInfo> getPlayerInfos();
 
     @Unique
     private long lastTick = -1L;
+
+    @Unique
+    private int gatedTabSize = 0;
 
     @Inject(method = "render", at = @At("HEAD"))
     private void club$processTablist(
@@ -40,27 +46,24 @@ public abstract class PlayerTabOverlayMixin {
             CallbackInfo ci
     ) {
         if (!(MCPVPStateChanger.inGame()
-                || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) return;
+                || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) {
+            gatedTabSize = 0;
+            return;
+        }
 
         assert Clubtimizer.client.level != null;
         long tick = Clubtimizer.client.level.getGameTime();
         if (tick == lastTick) return;
         lastTick = tick;
 
-        //Maybe only update every 4 ticks for added optimization not sure
-        //if (tick > lastTick + 4) return;
-
         List<PlayerInfo> list = this.getPlayerInfos();
-        int size = list.size();
-        if (size == 0) return;
+        if (list.isEmpty()) {
+            gatedTabSize = 0;
+            return;
+        }
 
-        /*
-        * Limits to 80 people - it should only be that max rendered on tab list I think
-        * might be diff w/ a big tab list mod
-        * but it helps with processing
-         */
-        int limit = Math.min(size, 80);
-        Tablist.process(list.subList(0, limit), tick);
+        gatedTabSize = Math.min(list.size(), TAB_MAX_RENDERED);
+        Tablist.process(list.subList(0, gatedTabSize), tick);
     }
 
     @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)
@@ -73,6 +76,14 @@ public abstract class PlayerTabOverlayMixin {
             CallbackInfo ci
     ) {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
+
+        List<PlayerInfo> list = this.getPlayerInfos();
+        int index = list.indexOf(entry);
+
+        if (index < 0 || index >= gatedTabSize) {
+            ci.cancel();
+            return;
+        }
 
         int latency = entry.getLatency();
         if (latency < 0 || latency == 1 || latency >= 1000) {

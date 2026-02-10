@@ -49,12 +49,15 @@ public class ClubtimizerConfig {
     }
 
     public static void save() {
+        fixResponseRulesInSave();
+
         try (FileWriter writer = new FileWriter(FILE)) {
             writer.write(GSON.toJson(data));
         } catch (IOException e) {
             Clubtimizer.LOGGER.error("Error saving config", e);
         }
     }
+
 
     private static void saveField(Runnable r) {
         r.run();
@@ -117,15 +120,30 @@ public class ClubtimizerConfig {
                 ));
     }
 
+    public static class AutoResponseRule {
+        public List<String> from = new ArrayList<>();
+        public List<String> to = new ArrayList<>();
+    }
+
     public static class AutoResponseConfig {
         public boolean enabled = true;
-        public Map<String, List<String>> rules =
-                new LinkedHashMap<>(Map.of(
-                        "ghosted,ghost,gohst",
-                        List.of("idc", "autoghost moment"),
-                        "ur bad",
-                        List.of("ur mom is", "erm you got lucky punk", "nuh uh")
-                ));
+        public Map<Integer, AutoResponseRule> rules = new LinkedHashMap<>();
+
+        {
+            AutoResponseRule r1 = new AutoResponseRule();
+            r1.from.add("ghost");
+            r1.from.add("gohst");
+            r1.to.add("autoghost moment");
+            r1.to.add("imagine ghosting");
+            rules.put(1, r1);
+
+            r1 = new AutoResponseRule();
+            r1.from.add("weird");
+            r1.from.add("wierd");
+            r1.to.add("ur the weird one for talking like that");
+            r1.to.add("excuses excuses");
+            rules.put(2, r1);
+        }
     }
 
     public static LobbyConfig getLobby() {
@@ -230,12 +248,85 @@ public class ClubtimizerConfig {
         saveField(() -> data.autoResponse.enabled = enabled);
     }
 
-    public static void addAutoResponseRule(List<String> triggers, List<String> responses) {
-        String key = String.join(",", triggers);
-        saveField(() -> data.autoResponse.rules.put(key, responses));
+    public static void addAutoResponseRule(String fromRaw, String toRaw) {
+        saveField(() -> {
+            int index = nextAutoResponseIndex();
+            AutoResponseRule rule = new AutoResponseRule();
+
+            for (String s : fromRaw.split("\\|")) {
+                String v = s.trim().toLowerCase();
+                if (!v.isEmpty()) rule.from.add(v);
+            }
+
+            for (String s : toRaw.split("\\|")) {
+                String v = s.trim();
+                if (!v.isEmpty()) rule.to.add(v);
+            }
+
+            if (!rule.from.isEmpty() && !rule.to.isEmpty()) {
+                data.autoResponse.rules.put(index, rule);
+            }
+        });
     }
 
-    public static void removeAutoResponseRule(String trigger) {
-        saveField(() -> data.autoResponse.rules.entrySet().removeIf(e -> e.getKey().contains(trigger)));
+    public static void addAutoResponseValue(int index, String value, boolean toSide) {
+        saveField(() -> {
+            AutoResponseRule rule =
+                    data.autoResponse.rules.computeIfAbsent(index, i -> new AutoResponseRule());
+            if (toSide) rule.to.add(value);
+            else rule.from.add(value);
+        });
+    }
+
+    public static void removeAutoResponseValue(int index, String value) {
+        saveField(() -> {
+            AutoResponseRule rule = data.autoResponse.rules.get(index);
+            if (rule == null) return;
+
+            rule.from.remove(value);
+            rule.to.remove(value);
+
+            if (rule.from.isEmpty() || rule.to.isEmpty()) {
+                data.autoResponse.rules.remove(index);
+                reindexAutoResponseRules();
+            }
+        });
+    }
+
+    public static void deleteAutoResponseRule(int index) {
+        saveField(() -> {
+            data.autoResponse.rules.remove(index);
+            reindexAutoResponseRules();
+        });
+    }
+
+    private static int nextAutoResponseIndex() {
+        return data.autoResponse.rules.keySet()
+                .stream()
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0) + 1;
+    }
+
+    private static void reindexAutoResponseRules() {
+        Map<Integer, AutoResponseRule> old = data.autoResponse.rules;
+        Map<Integer, AutoResponseRule> reordered = new LinkedHashMap<>();
+
+        int i = 1;
+        for (AutoResponseRule rule : old.values()) {
+            reordered.put(i++, rule);
+        }
+
+        data.autoResponse.rules = reordered;
+    }
+
+    private static void fixResponseRulesInSave() {
+        data.autoResponse.rules.entrySet()
+                .removeIf(e ->
+                        e.getValue().from.isEmpty() ||
+                                e.getValue().to.isEmpty()
+                );
+
+        reindexAutoResponseRules();
     }
 }

@@ -1,8 +1,8 @@
 package hero.bane.clubtimizer.state;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.action.AutoGG;
-import hero.bane.clubtimizer.action.AutoHush;
+import hero.bane.clubtimizer.action.GG;
+import hero.bane.clubtimizer.action.Hush;
 import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.TotemReset;
 import hero.bane.clubtimizer.mixin.accessor.PlayerListHudAccessor;
@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -50,8 +51,8 @@ public class MCPVPStateChanger {
     private static void setState(MCPVPState newState) {
         if (newState != current) {
             if (newState == MCPVPState.RED || newState == MCPVPState.BLUE) {
-                AutoHush.allowLobbyJoin = false;
-                AutoHush.onMatchJoin();
+                Hush.allowLobbyJoin = false;
+                Hush.onMatchJoin();
             }
             current = newState;
         }
@@ -220,10 +221,10 @@ public class MCPVPStateChanger {
     public static boolean inSpec() { return inSpec; }
 
     private static void onLobby() {
-        AutoHush.matchJoin = true;
-        AutoHush.allowLobbyJoin = true;
+        Hush.matchJoin = true;
+        Hush.allowLobbyJoin = true;
         Rematch.triggered = false;
-        AutoGG.resetReactionWindowEnd();
+        GG.resetReactionWindowEnd();
         TotemReset.resetCounter();
         PlayerUtil.requestUpdate();
     }

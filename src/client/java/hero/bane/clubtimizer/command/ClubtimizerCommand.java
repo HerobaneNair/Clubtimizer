@@ -17,7 +17,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Util;
 
 import java.io.File;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -172,7 +171,7 @@ public class ClubtimizerCommand {
                 ))
                 .then(ClientCommandManager.literal("setmsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
-                                .executes(ClubtimizerCommand::executeSetAutoHushMessage)));
+                                .executes(ClubtimizerCommand::setAutoHushMessage)));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoGG() {
@@ -195,17 +194,17 @@ public class ClubtimizerCommand {
                 ))
                 .then(ClientCommandManager.literal("setmsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
-                                .executes(ClubtimizerCommand::executeSetGGMessage)))
+                                .executes(ClubtimizerCommand::setGGMessage)))
                 .then(ClientCommandManager.literal("add")
                         .then(ClientCommandManager.argument("trigger", StringArgumentType.word())
-                                .executes(ClubtimizerCommand::executeAddGGTrigger)))
+                                .executes(ClubtimizerCommand::addGGTrigger)))
                 .then(ClientCommandManager.literal("remove")
                         .then(ClientCommandManager.argument("trigger", StringArgumentType.word())
                                 .suggests((ctx, b) -> {
                                     ClubtimizerConfig.getAutoGG().triggers.forEach(b::suggest);
                                     return b.buildFuture();
                                 })
-                                .executes(ClubtimizerCommand::executeRemoveGGTrigger)));
+                                .executes(ClubtimizerCommand::removeGGTrigger)));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoCope() {
@@ -216,10 +215,10 @@ public class ClubtimizerCommand {
                 "AutoCope")
                 .then(ClientCommandManager.literal("add")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
-                                .executes(ClubtimizerCommand::executeAddCopePhrase)))
+                                .executes(ClubtimizerCommand::addCopePhrase)))
                 .then(ClientCommandManager.literal("remove")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
-                                .executes(ClubtimizerCommand::executeRemoveCopePhrase)));
+                                .executes(ClubtimizerCommand::removeCopePhrase)));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoResponse() {
@@ -228,18 +227,123 @@ public class ClubtimizerCommand {
                 () -> ClubtimizerConfig.getAutoResponse().enabled,
                 ClubtimizerConfig::setAutoResponseEnabled,
                 "AutoResponse")
-                .then(ClientCommandManager.literal("add")
-                        .then(ClientCommandManager.argument("triggers", StringArgumentType.greedyString())
-                                .then(ClientCommandManager.argument("responses", StringArgumentType.greedyString())
-                                        .executes(ClubtimizerCommand::executeAddAutoResponseRule))))
-                .then(ClientCommandManager.literal("remove")
-                        .then(ClientCommandManager.argument("trigger", StringArgumentType.greedyString())
-                                .suggests((ctx, b) -> {
-                                    ClubtimizerConfig.getAutoResponse().rules.keySet()
-                                            .forEach(list -> b.suggest(String.join(",", list)));
-                                    return b.buildFuture();
-                                })
-                                .executes(ClubtimizerCommand::executeRemoveAutoResponseRule)));
+                .then(ClientCommandManager.literal("rule")
+
+                        .then(ClientCommandManager.literal("new")
+                                .then(ClientCommandManager.argument("from", StringArgumentType.greedyString())
+                                        .then(ClientCommandManager.argument("to", StringArgumentType.greedyString())
+                                                .executes(ctx -> {
+                                                    String from = StringArgumentType.getString(ctx, "from");
+                                                    String to = StringArgumentType.getString(ctx, "to");
+
+                                                    ClubtimizerConfig.addAutoResponseRule(from, to);
+                                                    say("AutoResponse rule created", 0x55FF55);
+                                                    return 1;
+                                                }))))
+                        .then(ClientCommandManager.literal("delete")
+                                .then(ClientCommandManager.argument("index", StringArgumentType.word())
+                                        .suggests((ctx, b) -> {
+                                            ClubtimizerConfig.getAutoResponse().rules.keySet()
+                                                    .forEach(i -> b.suggest(Integer.toString(i)));
+                                            return b.buildFuture();
+                                        })
+                                        .executes(ctx -> {
+                                            int index = Integer.parseInt(
+                                                    StringArgumentType.getString(ctx, "index")
+                                            );
+
+                                            ClubtimizerConfig.deleteAutoResponseRule(index);
+                                            say("Rule deleted", 0xFF5555);
+                                            return 1;
+                                        })))
+                        .then(ClientCommandManager.literal("edit")
+                                .then(ClientCommandManager.argument("index", StringArgumentType.word())
+                                        .suggests((ctx, b) -> {
+                                            ClubtimizerConfig.getAutoResponse().rules.keySet()
+                                                    .forEach(i -> b.suggest(Integer.toString(i)));
+                                            return b.buildFuture();
+                                        })
+                                        .then(ClientCommandManager.literal("add")
+                                                .then(ClientCommandManager.literal("key")
+                                                        .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
+                                                                .executes(ctx -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    String raw = StringArgumentType.getString(ctx, "entry");
+
+                                                                    for (String s : raw.split("\\|")) {
+                                                                        String v = s.trim().toLowerCase();
+                                                                        if (!v.isEmpty()) {
+                                                                            ClubtimizerConfig.addAutoResponseValue(index, v, false);
+                                                                        }
+                                                                    }
+
+                                                                    say("Rule updated", 0x55FFFF);
+                                                                    return 1;
+                                                                })))
+                                                .then(ClientCommandManager.literal("value")
+                                                        .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
+                                                                .executes(ctx -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    String raw = StringArgumentType.getString(ctx, "entry");
+
+                                                                    for (String s : raw.split("\\|")) {
+                                                                        String v = s.trim();
+                                                                        if (!v.isEmpty()) {
+                                                                            ClubtimizerConfig.addAutoResponseValue(index, v, true);
+                                                                        }
+                                                                    }
+
+                                                                    say("Rule updated", 0x55FFFF);
+                                                                    return 1;
+                                                                }))))
+                                        .then(ClientCommandManager.literal("remove")
+                                                .then(ClientCommandManager.literal("key")
+                                                        .then(ClientCommandManager.argument("entry", StringArgumentType.word())
+                                                                .suggests((ctx, b) -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    var rule = ClubtimizerConfig.getAutoResponse().rules.get(index);
+                                                                    if (rule != null) rule.from.forEach(b::suggest);
+                                                                    return b.buildFuture();
+                                                                })
+                                                                .executes(ctx -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    String entry =
+                                                                            StringArgumentType.getString(ctx, "entry").toLowerCase();
+
+                                                                    ClubtimizerConfig.removeAutoResponseValue(index, entry);
+                                                                    say("Rule updated", 0xFFAA00);
+                                                                    return 1;
+                                                                })))
+                                                .then(ClientCommandManager.literal("value")
+                                                        .then(ClientCommandManager.argument("entry", StringArgumentType.word())
+                                                                .suggests((ctx, b) -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    var rule = ClubtimizerConfig.getAutoResponse().rules.get(index);
+                                                                    if (rule != null) rule.to.forEach(b::suggest);
+                                                                    return b.buildFuture();
+                                                                })
+                                                                .executes(ctx -> {
+                                                                    int index = Integer.parseInt(
+                                                                            StringArgumentType.getString(ctx, "index")
+                                                                    );
+                                                                    String entry =
+                                                                            StringArgumentType.getString(ctx, "entry");
+                                                                    ClubtimizerConfig.removeAutoResponseValue(index, entry);
+                                                                    say("Rule updated", 0xFFAA00);
+                                                                    return 1;
+                                                                }))))
+                                ))
+                );
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> literalToggleGroupRoot(
@@ -286,58 +390,43 @@ public class ClubtimizerCommand {
         return 1;
     }
 
-    private static int executeSetAutoHushMessage(CommandContext<FabricClientCommandSource> ctx) {
+    private static int setAutoHushMessage(CommandContext<FabricClientCommandSource> ctx) {
         ClubtimizerConfig.setAutoHushMessage(StringArgumentType.getString(ctx, "msg"));
         say("AutoHush message updated", 0x55FFFF);
         return 1;
     }
 
-    private static int executeSetGGMessage(CommandContext<FabricClientCommandSource> ctx) {
+    private static int setGGMessage(CommandContext<FabricClientCommandSource> ctx) {
         ClubtimizerConfig.setAutoGGMessage(StringArgumentType.getString(ctx, "msg"));
         say("GG message updated", 0x55FFFF);
         return 1;
     }
 
-    private static int executeAddGGTrigger(CommandContext<FabricClientCommandSource> ctx) {
+    private static int addGGTrigger(CommandContext<FabricClientCommandSource> ctx) {
         String trigger = StringArgumentType.getString(ctx, "trigger");
         ClubtimizerConfig.addAutoGGTrigger(trigger);
         say("Added GG trigger: " + trigger, 0x55FFFF);
         return 1;
     }
 
-    private static int executeRemoveGGTrigger(CommandContext<FabricClientCommandSource> ctx) {
+    private static int removeGGTrigger(CommandContext<FabricClientCommandSource> ctx) {
         String trigger = StringArgumentType.getString(ctx, "trigger");
         ClubtimizerConfig.removeAutoGGTrigger(trigger);
         say("Removed GG trigger: " + trigger, 0x55FFFF);
         return 1;
     }
 
-    private static int executeAddCopePhrase(CommandContext<FabricClientCommandSource> ctx) {
+    private static int addCopePhrase(CommandContext<FabricClientCommandSource> ctx) {
         String msg = StringArgumentType.getString(ctx, "msg");
         ClubtimizerConfig.addAutoCopePhrase(msg);
         say("Phrase added", 0x55FFFF);
         return 1;
     }
 
-    private static int executeRemoveCopePhrase(CommandContext<FabricClientCommandSource> ctx) {
+    private static int removeCopePhrase(CommandContext<FabricClientCommandSource> ctx) {
         String msg = StringArgumentType.getString(ctx, "msg");
         ClubtimizerConfig.removeAutoCopePhrase(msg);
         say("Phrase removed", 0x55FFFF);
-        return 1;
-    }
-
-    private static int executeAddAutoResponseRule(CommandContext<FabricClientCommandSource> ctx) {
-        List<String> triggers = List.of(StringArgumentType.getString(ctx, "triggers").split("[,;]"));
-        List<String> responses = List.of(StringArgumentType.getString(ctx, "responses").split("[,;]"));
-        ClubtimizerConfig.addAutoResponseRule(triggers, responses);
-        say("Added AutoResponse rule: " + triggers + " → " + responses, 0x55FFFF);
-        return 1;
-    }
-
-    private static int executeRemoveAutoResponseRule(CommandContext<FabricClientCommandSource> ctx) {
-        String trigger = StringArgumentType.getString(ctx, "trigger");
-        ClubtimizerConfig.removeAutoResponseRule(trigger);
-        say("Removed AutoResponse rule containing: " + trigger, 0x55FFFF);
         return 1;
     }
 }

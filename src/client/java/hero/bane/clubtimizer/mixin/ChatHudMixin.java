@@ -1,7 +1,7 @@
 package hero.bane.clubtimizer.mixin;
 
-import hero.bane.clubtimizer.action.AutoGG;
-import hero.bane.clubtimizer.action.AutoHush;
+import hero.bane.clubtimizer.action.GG;
+import hero.bane.clubtimizer.action.Hush;
 import hero.bane.clubtimizer.config.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.PlayerUtil;
@@ -31,7 +31,7 @@ public abstract class ChatHudMixin {
             GuiMessageTag tag,
             CallbackInfo ci
     ) {
-        if (MCPVPStateChanger.inLobby() || AutoGG.inSpawn()) {
+        if (MCPVPStateChanger.inLobby() || GG.inSpawn()) {
             String noFormatting = message.getString();
 
             if (ClubtimizerConfig.getLobby().hideChat) {
@@ -66,7 +66,7 @@ public abstract class ChatHudMixin {
             argsOnly = true
     )
     private Component club$applyAutoHush(Component value) {
-        return AutoHush.replaceMessage(value);
+        return Hush.replaceMessage(value);
     }
 
     @Unique

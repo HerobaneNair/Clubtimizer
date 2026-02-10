@@ -84,7 +84,6 @@ public final class Requeue {
         MCPVPState pvpState = MCPVPStateChanger.get();
 
         if (pvpState == MCPVPState.LOBBY) {
-            say("Opening queue menu", 0xFFFFFF, false);
             rightClickSword(client);
             state = State.WAITING_MENU;
             return;
@@ -92,7 +91,6 @@ public final class Requeue {
 
         if (pvpState == MCPVPState.IN_QUEUE) {
             if (tick - lastLeaveTick >= LEAVE_COOLDOWN_TICKS) {
-                say("Leaving queue", 0xFFFFFF, false);
                 ChatUtil.chat("/leave");
                 lastLeaveTick = tick;
             }
@@ -154,6 +152,7 @@ public final class Requeue {
         String name = targetNames.pollFirst();
 
         clickSlot(client, screen.getMenu().containerId, slot);
+        assert name != null;
         say(qPrefix.copy().append(" ").append(TextUtil.rainbowGradient(name)));
 
         awaitingServerUpdate = true;

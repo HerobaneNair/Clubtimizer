@@ -1,7 +1,7 @@
 package hero.bane.clubtimizer.util;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.action.AutoGG;
+import hero.bane.clubtimizer.action.GG;
 import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.config.ClubtimizerConfig;
@@ -38,13 +38,12 @@ public class PlayerUtil {
     }
 
     public static void requestUpdate() {
-        Minecraft c = Minecraft.getInstance();
-        if (c == null || c.getConnection() == null) return;
+        if (Clubtimizer.client.getConnection() == null) return;
 
         int id = nextRequestId();
         lastRequestId = id;
 
-        c.getConnection().send(new ServerboundCommandSuggestionPacket(id, TARGET));
+        Clubtimizer.client.getConnection().send(new ServerboundCommandSuggestionPacket(id, TARGET));
     }
 
     public static boolean isOurRequest(int id) {
@@ -100,7 +99,7 @@ public class PlayerUtil {
 
         if (isNpc(player)) return false;
         if (Requeue.isInsideCylinder(player)) return false;
-        return AutoGG.inSpawn();
+        return GG.inSpawn();
     }
 
     public static boolean isNpc(Player p) {

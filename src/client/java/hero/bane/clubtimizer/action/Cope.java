@@ -8,7 +8,7 @@ import hero.bane.clubtimizer.util.TextUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class AutoCope {
+public class Cope {
     private static long lastCopeTime = 0;
 
     public static void handleMessage(String text) {

@@ -7,7 +7,7 @@ import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 
-public class AutoGG {
+public class GG {
     private static long reactionWindowEnd = 0;
     private static boolean sentGG = true;
 
