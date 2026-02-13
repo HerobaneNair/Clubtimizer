@@ -1,7 +1,7 @@
 package hero.bane.clubtimizer.util;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -22,7 +22,7 @@ public class PingUtil {
         return -1;
     }
 
-    public static int parseScoreboardPing(MinecraftClient client) {
+    public static int parseScoreboardPing(Minecraft client) {
         List<String> lines = TextUtil.getScoreboardLines(client);
         for (String line : lines) {
             if (line.contains("ms")) {
@@ -37,7 +37,7 @@ public class PingUtil {
                 }
             }
         }
-        return 0;
+        return 25;
     }
 
     public static int getPingColor(int ping) {
@@ -52,7 +52,7 @@ public class PingUtil {
         return 0xBF0000;
     }
 
-    public static int getDynamicDelay(MinecraftClient client, int tickBuffer) {
+    public static int getDynamicDelay(Minecraft client, int tickBuffer) {
         int ping = PingUtil.parseScoreboardPing(client);
         ping = ping == 0 ? 25 : ping;
         int calculated = (int) Math.ceil(ping / 25.0) + tickBuffer;
@@ -62,7 +62,7 @@ public class PingUtil {
 
     private static float computeOffset(int start, int end, int value) {
         float offset = (value - start) / (float) (end - start);
-        return MathHelper.clamp(offset, 0.0F, 1.0F);
+        return Mth.clamp(offset, 0.0F, 1.0F);
     }
 
     private static int interpolate(int startColor, int endColor, float offset) {

@@ -4,18 +4,18 @@
   "package": "hero.bane.clubtimizer.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "AbstractContainerScreenMixin",
     "ChatHudMixin",
     "ClientPlayerInteractionManagerMixin",
     "ClientPlayNetworkHandlerMixin",
+    "EntityHitboxDebugRendererMixin",
     "EntityRenderDispatcherMixin",
-    "HandledScreenMixin",
-    "LivingEntityRendererMixin",
     "PlayerListEntryMixin",
-    "PlayerListHudMixin",
-    "TeleportSpectatorMenuMixin",
-    "TeleportToSpecificPlayerSpectatorCommandMixin",
+    "PlayerMenuItemMixin",
+    "PlayerTabOverlayMixin",
+    "TeleportToPlayerMenuCategoryMixin",
     "TextDisplayEntityRendererMixin",
-    "accessor.HandledScreenAccessor",
+    "accessor.AbstractContainerScreenAccessor",
     "accessor.InGameHudAccessor",
     "accessor.PlayerListEntryAccessor",
     "accessor.PlayerListHudAccessor"
@@ -28,6 +28,7 @@
   },
   "mixins": [
     "BetterPingDisplayMixin",
-    "ClientConnectionMixin"
+    "ClientConnectionMixin",
+    "EntityMixin"
   ]
 }

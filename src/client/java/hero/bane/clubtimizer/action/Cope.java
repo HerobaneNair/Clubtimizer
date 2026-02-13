@@ -1,14 +1,14 @@
 package hero.bane.clubtimizer.action;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class AutoCope {
+public class Cope {
     private static long lastCopeTime = 0;
 
     public static void handleMessage(String text) {
@@ -32,7 +32,7 @@ public class AutoCope {
         }
     }
 
-    private static void sayRandomPhrase(ClubtimizerConfig.AutoCopeConfig cfg) {
+    private static void sayRandomPhrase(ClubtimizerConfig.AutoCope cfg) {
         if (cfg.phrases.isEmpty()) return;
         String msg = cfg.phrases.get(ThreadLocalRandom.current().nextInt(cfg.phrases.size()));
         ChatUtil.delayedChat(msg, 200);

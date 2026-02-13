@@ -3,8 +3,8 @@ package hero.bane.clubtimizer.auto;
 import hero.bane.clubtimizer.mixin.accessor.PlayerListEntryAccessor;
 import hero.bane.clubtimizer.util.PingUtil;
 import hero.bane.clubtimizer.util.TextUtil;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.text.Text;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,22 +28,24 @@ public class Tablist {
         return (s.substring(0, start) + s.substring(after)).trim();
     }
 
-    public static void process(List<PlayerListEntry> entries, long tick) {
-        List<String> daggerNames = new ArrayList<>();
+    public static void process(List<PlayerInfo> entries, long tick) {
+        List<String> aliveNames = new ArrayList<>();
 
-        for (PlayerListEntry entry : entries) {
-            Text disp = entry.getDisplayName();
+        for (PlayerInfo entry : entries) {
+            Component disp = entry.getTabListDisplayName();
             if (disp == null) continue;
 
-            String raw = disp.getString();
+            String raw = disp.toString();
             if (raw.contains("ms")) {
                 int ping = PingUtil.parseTablistPing(raw);
                 if (ping >= 0) {
                     ((PlayerListEntryAccessor) entry).setLatency(ping);
+
                     String legacy = TextUtil.toLegacyString(disp);
                     legacy = removeMs(legacy);
-                    entry.setDisplayName(TextUtil.fromLegacy(legacy));
-                    disp = entry.getDisplayName();
+
+                    entry.setTabListDisplayName(TextUtil.fromLegacy(legacy));
+                    disp = entry.getTabListDisplayName();
                     if (disp == null) continue;
                 }
             }
@@ -52,10 +54,10 @@ public class Tablist {
             if (legacyFull.contains("🗡")) {
                 String stripped = TextUtil.stripFormatting(legacyFull).trim();
                 String[] parts = stripped.split(" ");
-                if (parts.length >= 2) daggerNames.add(parts[1]);
+                if (parts.length >= 2) aliveNames.add(parts[1]);
             }
         }
 
-        Spectator.updateAlivelist(daggerNames, tick);
+        Spectator.updateAlivelist(aliveNames, tick);
     }
 }

@@ -1,21 +1,20 @@
 package hero.bane.clubtimizer.action;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
-import hero.bane.clubtimizer.util.FriendUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 import hero.bane.clubtimizer.util.TextUtil;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 
-public class AutoHush {
+public class Hush {
     public static boolean matchJoin = true;
     public static boolean allowLobbyJoin = false;
 
-    public static Text replaceMessage(Text msg) {
+    public static Component replaceMessage(Component msg) {
         var cfg = ClubtimizerConfig.getAutoHush();
         if (!cfg.enabled || !MCPVPStateChanger.inGame()) return msg;
 
@@ -43,7 +42,7 @@ public class AutoHush {
 
         if (lower.contains("§#1fa5ff »")) {
             String cleaned = TextUtil.stripFormatting(afterArrow).trim().toLowerCase();
-            boolean isTrigger = AutoGG.isTrigger(cleaned) || cleaned.equals("ss");
+            boolean isTrigger = GG.isTrigger(cleaned) || cleaned.equals("ss");
             if (cfg.allowSS && isTrigger) return msg;
             return buildHidden(beforeArrow, afterArrow, true);
         }
@@ -55,7 +54,7 @@ public class AutoHush {
         var cfg = ClubtimizerConfig.getAutoHush();
         if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
         if (!matchJoin && !allowLobbyJoin) return;
-        ChatUtil.delayedChat(cfg.joinMessage);
+        ChatUtil.delayedChat(cfg.joinMessage + " [h-club]");
         matchJoin = false;
         allowLobbyJoin = false;
     }
@@ -81,20 +80,29 @@ public class AutoHush {
     private static boolean isSelfOrFriend(String raw) {
         String name = cleanName(raw).toLowerCase();
         if (name.equals(Clubtimizer.playerName.toLowerCase())) return true;
-        return FriendUtil.isFriend(name);
+        return PlayerUtil.isFriend(name);
     }
 
-    private static Text buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
-        String prefix = playerChat ? beforeArrow + "§#1FA5FF » " : beforeArrow + "§#7A7A7A » ";
-        MutableText base = (MutableText) TextUtil.fromLegacy(prefix);
+    private static Component buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
+        String prefix = playerChat
+                ? beforeArrow + "§#1FA5FF » "
+                : beforeArrow + "§#7A7A7A » ";
+
+        MutableComponent base = (MutableComponent) TextUtil.fromLegacy(prefix);
 
         String hoverText = TextUtil.stripFormatting(afterArrow).trim();
         int len = afterArrow.length();
         String maskColor = playerChat ? "§7§m" : "§8§m";
-        MutableText hiddenPart = (MutableText) TextUtil.fromLegacy(maskColor + " ".repeat(len));
+        MutableComponent hiddenPart =
+                (MutableComponent) TextUtil.fromLegacy(maskColor + " ".repeat(len));
 
         if (!hoverText.isEmpty()) {
-            hiddenPart.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(Text.literal(hoverText))));
+            hiddenPart.withStyle(style ->
+                    style
+                            .withHoverEvent(new HoverEvent.ShowText(
+                                    Component.literal(hoverText)
+                            ))
+            );
             Clubtimizer.LOGGER.info("Message: {}", hoverText);
         }
 

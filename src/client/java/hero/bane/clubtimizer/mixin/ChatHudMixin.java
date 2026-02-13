@@ -1,17 +1,15 @@
 package hero.bane.clubtimizer.mixin;
 
-import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.action.AutoGG;
-import hero.bane.clubtimizer.action.AutoHush;
-import hero.bane.clubtimizer.auto.Requeue;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.action.GG;
+import hero.bane.clubtimizer.action.Hush;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
-import hero.bane.clubtimizer.util.FriendUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 import hero.bane.clubtimizer.util.TextUtil;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.Text;
+import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,31 +17,39 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ChatHud.class)
+@Mixin(ChatComponent.class)
 public abstract class ChatHudMixin {
 
     @Inject(
-            method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
+            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void club$chatCanceller(Text message, MessageSignatureData signatureData, MessageIndicator indicator, CallbackInfo ci) {
-        if (MCPVPStateChanger.inLobby() || AutoGG.inSpawn()) {
+    private void club$chatCanceller(
+            Component message,
+            MessageSignature signature,
+            GuiMessageTag tag,
+            CallbackInfo ci
+    ) {
+        if (MCPVPStateChanger.inLobby() || GG.inSpawn()) {
             String noFormatting = message.getString();
 
-            if(ClubtimizerConfig.getLobby().hideChat) {
+            if (ClubtimizerConfig.getLobby().hideChat) {
                 int arrowIndex = noFormatting.indexOf('»');
 
                 if (arrowIndex >= 0) {
                     String before = noFormatting.substring(0, arrowIndex).strip();
                     String name = extractName(before);
 
-                    if (!FriendUtil.isSelfOrFriend(name)) ci.cancel();
+                    if (!PlayerUtil.isSelfOrFriend(name)) ci.cancel();
                     return;
                 }
             }
 
-            if(!ClubtimizerConfig.getLobby().warning && noFormatting.startsWith("⚠ WARNING")) ci.cancel();
+            if (!ClubtimizerConfig.getLobby().warning
+                    && noFormatting.startsWith("⚠ WARNING")) {
+                ci.cancel();
+            }
         }
 
         if (MCPVPStateChanger.inGame()
@@ -51,19 +57,17 @@ public abstract class ChatHudMixin {
             if (TextUtil.toLegacyString(message).contains("§#7a7a7a »")) {
                 ci.cancel();
             }
-
         }
     }
 
     @ModifyVariable(
-            method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
+            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
             at = @At("HEAD"),
             argsOnly = true
     )
-    private Text club$applyAutoHush(Text value) {
-        return AutoHush.replaceMessage(value);
+    private Component club$applyAutoHush(Component value) {
+        return Hush.replaceMessage(value);
     }
-
 
     @Unique
     private String extractName(String raw) {
