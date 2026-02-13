@@ -1,12 +1,9 @@
 package hero.bane.clubtimizer.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.auto.Tablist;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
-import hero.bane.clubtimizer.util.PingUtil;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -63,7 +60,7 @@ public abstract class PlayerTabOverlayMixin {
         }
 
         gatedTabSize = Math.min(list.size(), TAB_MAX_RENDERED);
-        Tablist.process(list.subList(0, gatedTabSize), tick);
+        Tablist.handleTab(list.subList(0, gatedTabSize), tick);
     }
 
     @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)

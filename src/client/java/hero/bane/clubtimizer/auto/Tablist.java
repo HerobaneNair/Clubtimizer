@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Tablist {
 
-    public static String removeMs(String s) {
+    private static String removeMs(String s) {
         if (!s.contains("ms")) return s;
         int idx = s.indexOf("ms");
         if (idx < 0) return s;
@@ -26,7 +26,7 @@ public class Tablist {
         return (s.substring(0, start) + s.substring(after)).trim();
     }
 
-    public static void process(List<PlayerInfo> entries, long tick) {
+    public static void handleTab(List<PlayerInfo> entries, long tick) {
         List<String> aliveNames = new ArrayList<>();
 
         for (PlayerInfo entry : entries) {
@@ -34,7 +34,10 @@ public class Tablist {
             if (disp == null) continue;
 
             String raw = disp.toString();
-            if (raw.contains("ms")) {
+
+            //Added the literal{dagger thing cause it will help not have to process the dead people in large fights again
+            //cause you don't really need to care about their pings
+            if (raw.startsWith("literal{🗡") && raw.contains("ms")) {
                 int ping = PingUtil.parseTablistPing(raw);
                 if (ping >= 0) {
                     ((PlayerListEntryAccessor) entry).setLatency(ping);
@@ -45,14 +48,11 @@ public class Tablist {
                     entry.setTabListDisplayName(TextUtil.fromLegacy(legacy));
                     disp = entry.getTabListDisplayName();
                     if (disp == null) continue;
+                    String legacyFull = TextUtil.toLegacyString(disp);
+                    String stripped = TextUtil.stripFormatting(legacyFull).trim();
+                    String[] parts = stripped.split(" ");
+                    if (parts.length >= 2) aliveNames.add(parts[1]);
                 }
-            }
-
-            String legacyFull = TextUtil.toLegacyString(disp);
-            if (legacyFull.contains("🗡")) {
-                String stripped = TextUtil.stripFormatting(legacyFull).trim();
-                String[] parts = stripped.split(" ");
-                if (parts.length >= 2) aliveNames.add(parts[1]);
             }
         }
 
