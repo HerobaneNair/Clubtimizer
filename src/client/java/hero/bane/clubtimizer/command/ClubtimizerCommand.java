@@ -23,6 +23,7 @@ import static hero.bane.clubtimizer.util.ChatUtil.say;
 
 public class ClubtimizerCommand {
     private static final String NEW_AR_RULE_HINT = " from (only inputs, use add to add outputs, separate with |'s) ";
+    private static final String versionProblems = "Version Getter Messed Up, ping HerobaneNair or fix fabric.mod";
 
     public static void register() {
         ClubtimizerConfig.load();
@@ -32,6 +33,7 @@ public class ClubtimizerCommand {
                                 .requires(source ->
                                         Clubtimizer.ip.contains("mcpvp.club") //Seemed like a good add, hopefully doesn't break anything
                                 )
+                                .executes(ClubtimizerCommand::debugger)
                                 .then(buildConfig())
                                 .then(buildRequeue())
                                 .then(buildAutoHush())
@@ -39,7 +41,6 @@ public class ClubtimizerCommand {
                                 .then(buildAutoCope())
                                 .then(buildAutoResponse())
                                 .then(buildLobby())
-                                .then(buildStateGet())
                 )
         );
     }
@@ -114,17 +115,6 @@ public class ClubtimizerCommand {
                                         "Hide Chat in lobby"
                                 )))
                 );
-    }
-
-    private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
-        return ClientCommandManager.literal("stateGet")
-                .executes(ctx -> {
-                    LocalPlayer player = Clubtimizer.player;
-                    if (player == null || Clubtimizer.client.level == null) return 0;
-                    MCPVPState state = MCPVPStateChanger.get();
-                    say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
-                    return 1;
-                });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildConfig() {
@@ -481,6 +471,42 @@ public class ClubtimizerCommand {
         String msg = StringArgumentType.getString(ctx, "msg");
         ClubtimizerConfig.removeAutoCopePhrase(msg);
         say("Phrase removed", 0x55FFFF);
+        return 1;
+    }
+
+    private static int debugger(CommandContext<FabricClientCommandSource> context) {
+        LocalPlayer player = Clubtimizer.player;
+        if (player == null || Clubtimizer.client.level == null) return 0;
+
+        MCPVPState state = MCPVPStateChanger.get();
+        say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
+
+        String clubtimizerVersion = FabricLoader.getInstance()
+                .getModContainer("clubtimizer")
+                .get()
+                .getMetadata()
+                .getVersion()
+                .getFriendlyString();
+
+        int versionReturned = 0;
+
+        try {
+            versionReturned = Integer.parseInt(
+                    clubtimizerVersion
+                            .substring(
+                                    clubtimizerVersion.indexOf('-') + 1,
+                                    clubtimizerVersion.indexOf('+')
+                            )
+                            .replaceAll("\\.", "")
+            );
+        } catch (Exception e) {
+            say(versionProblems, 0xFF5555);
+            Clubtimizer.LOGGER.error(versionProblems, e);
+        }
+
+        say("Clubtimizer Version: " + clubtimizerVersion, 0xFFFFFF);
+        say("Returns: " + versionReturned, 0xAAAAAA);
+
         return 1;
     }
 }
