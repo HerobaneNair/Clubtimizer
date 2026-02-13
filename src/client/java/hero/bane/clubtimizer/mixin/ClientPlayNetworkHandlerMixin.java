@@ -6,11 +6,10 @@ import hero.bane.clubtimizer.action.Response;
 import hero.bane.clubtimizer.auto.PartyMaker;
 import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.Spectator;
-import hero.bane.clubtimizer.auto.TotemReset;
+import hero.bane.clubtimizer.auto.Totem;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.PlayerUtil;
-import hero.bane.clubtimizer.util.TextUtil;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
@@ -41,7 +40,7 @@ public class ClientPlayNetworkHandlerMixin {
         PartyMaker.handleMessage(noFormatting);
         Rematch.handleMessage(noFormatting);
         Spectator.handleMessage(noFormatting);
-        TotemReset.handleMessage(noFormatting);
+        Totem.handleMessage(noFormatting);
     }
 
     @Inject(method = "handleCommandSuggestions", at = @At("HEAD"))

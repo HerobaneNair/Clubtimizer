@@ -37,7 +37,7 @@ public class PingUtil {
                 }
             }
         }
-        return 0;
+        return 25;
     }
 
     public static int getPingColor(int ping) {

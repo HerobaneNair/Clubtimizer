@@ -28,10 +28,6 @@ public class ChatUtil {
         delayedSay(message, color, true, delayMs);
     }
 
-    public static void delayedSay(String message, int color) {
-        delayedSay(message, color, true, 100);
-    }
-
     public static void delayedSay(String message, int color, boolean prepend, long delayMs) {
         Clubtimizer.executor.schedule(() -> say(message, color, prepend), delayMs, TimeUnit.MILLISECONDS);
     }

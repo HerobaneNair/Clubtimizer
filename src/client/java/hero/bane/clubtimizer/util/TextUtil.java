@@ -61,7 +61,6 @@ public class TextUtil {
             if (stripped.isEmpty()) break;
             if (stripped.contains("☠")) count++;
         }
-        Clubtimizer.temp1 = count;
         return count;
     }
 

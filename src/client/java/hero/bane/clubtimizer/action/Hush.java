@@ -1,7 +1,7 @@
 package hero.bane.clubtimizer.action;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PlayerUtil;
@@ -54,7 +54,7 @@ public class Hush {
         var cfg = ClubtimizerConfig.getAutoHush();
         if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
         if (!matchJoin && !allowLobbyJoin) return;
-        ChatUtil.delayedChat(cfg.joinMessage);
+        ChatUtil.delayedChat(cfg.joinMessage + " [h-club]");
         matchJoin = false;
         allowLobbyJoin = false;
     }

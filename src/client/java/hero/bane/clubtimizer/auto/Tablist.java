@@ -35,7 +35,7 @@ public class Tablist {
             Component disp = entry.getTabListDisplayName();
             if (disp == null) continue;
 
-            String raw = disp.getString();
+            String raw = disp.toString();
             if (raw.contains("ms")) {
                 int ping = PingUtil.parseTablistPing(raw);
                 if (ping >= 0) {

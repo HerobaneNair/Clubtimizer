@@ -1,8 +1,8 @@
 package hero.bane.clubtimizer.action;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
-import hero.bane.clubtimizer.config.ClubtimizerConfig.AutoResponseRule;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig.AutoResponseRule;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 

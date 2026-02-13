@@ -2,7 +2,7 @@ package hero.bane.clubtimizer.mixin;
 
 import hero.bane.clubtimizer.action.GG;
 import hero.bane.clubtimizer.action.Hush;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.PlayerUtil;
 import hero.bane.clubtimizer.util.TextUtil;

@@ -3,9 +3,9 @@ package hero.bane.clubtimizer;
 import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.auto.Tablist;
-import hero.bane.clubtimizer.auto.TotemReset;
+import hero.bane.clubtimizer.auto.Totem;
 import hero.bane.clubtimizer.command.ClubtimizerCommand;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import net.fabricmc.api.ClientModInitializer;
@@ -26,7 +26,6 @@ public class Clubtimizer implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("clubtimizer");
     public static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     public static String ip = "_";
-    public static int temp1 = 0;
     public static Minecraft client;
     public static LocalPlayer player;
     public static String playerName = "";
@@ -49,6 +48,7 @@ public class Clubtimizer implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(minecraft -> {
             Spectator.handleTick();
             Requeue.handleTick(minecraft);
+//            Totem.handleTick(minecraft);
 
             if (minecraft.player != null && minecraft.level != null) {
                 long t = minecraft.level.getGameTime();
@@ -60,7 +60,7 @@ public class Clubtimizer implements ClientModInitializer {
             }
         });
 
-        TotemReset.initReflection();
+        Totem.initReflection();
 
         Tablist.noBetterPing = !FabricLoader.getInstance().isModLoaded("betterpingdisplay");
     }

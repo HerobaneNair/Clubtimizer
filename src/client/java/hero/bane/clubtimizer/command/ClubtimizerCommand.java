@@ -5,7 +5,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.auto.Requeue;
-import hero.bane.clubtimizer.config.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.TextUtil;
@@ -23,12 +22,16 @@ import java.util.function.Supplier;
 import static hero.bane.clubtimizer.util.ChatUtil.say;
 
 public class ClubtimizerCommand {
+    private static final String NEW_AR_RULE_HINT = " from (only inputs, use add to add outputs, separate with |'s) ";
 
     public static void register() {
         ClubtimizerConfig.load();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(
-                        ClientCommandManager.literal("h-pvpclub")
+                        ClientCommandManager.literal("h-club")
+                                .requires(source ->
+                                        Clubtimizer.ip.contains("mcpvp.club") //Seemed like a good add, hopefully doesn't break anything
+                                )
                                 .then(buildConfig())
                                 .then(buildRequeue())
                                 .then(buildAutoHush())
@@ -130,7 +133,7 @@ public class ClubtimizerCommand {
                     File f = new File(FabricLoader.getInstance().getConfigDir().toFile(), "clubtimizer.json");
                     try {
                         Util.getPlatform().openFile(f);
-                        say("Opened config file", 0x55FFFF);
+                        say("Opened Config", 0x55FFFF);
                     } catch (Exception e) {
                         say("Failed to open config: " + e.getMessage(), 0xFF5555);
                         Clubtimizer.LOGGER.error("Failed to open config: ", e);
@@ -138,8 +141,10 @@ public class ClubtimizerCommand {
                     return 1;
                 }))
                 .then(ClientCommandManager.literal("save").executes(ctx -> {
-                    ClubtimizerConfig.save();
-                    say("Config saved", 0x55FFFF);
+                    ClubtimizerConfig.load();
+                    if (ClubtimizerConfig.save()) {
+                        say("Saved Config", 0x55FF55);
+                    }
                     return 1;
                 }));
     }
@@ -153,7 +158,7 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoHush() {
         return literalToggleGroupRoot(
-                "autohush",
+                "autoHush",
                 () -> ClubtimizerConfig.getAutoHush().enabled,
                 ClubtimizerConfig::setAutoHushEnabled,
                 "AutoHush")
@@ -176,7 +181,7 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoGG() {
         return literalToggleGroupRoot(
-                "autogg",
+                "autoGG",
                 () -> ClubtimizerConfig.getAutoGG().enabled,
                 ClubtimizerConfig::setAutoGGEnabled,
                 "AutoGG")
@@ -209,7 +214,7 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoCope() {
         return literalToggleGroupRoot(
-                "autocope",
+                "autoCope",
                 () -> ClubtimizerConfig.getAutoCope().enabled,
                 ClubtimizerConfig::setAutoCopeEnabled,
                 "AutoCope")
@@ -223,7 +228,7 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoResponse() {
         return literalToggleGroupRoot(
-                "autoresponse",
+                "autoResponse",
                 () -> ClubtimizerConfig.getAutoResponse().enabled,
                 ClubtimizerConfig::setAutoResponseEnabled,
                 "AutoResponse")
@@ -252,17 +257,25 @@ public class ClubtimizerCommand {
                                 )
                         )
                         .then(ClientCommandManager.literal("new")
-                                .then(ClientCommandManager.argument("from", StringArgumentType.greedyString())
-                                        .then(ClientCommandManager.argument("to", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    String from = StringArgumentType.getString(ctx, "from");
-                                                    String to = StringArgumentType.getString(ctx, "to");
+                                .then(ClientCommandManager.argument(NEW_AR_RULE_HINT, StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            String from = StringArgumentType.getString(ctx, NEW_AR_RULE_HINT);
+                                            int index = ClubtimizerConfig.getAutoResponse().rules
+                                                    .keySet()
+                                                    .stream()
+                                                    .mapToInt(i -> i)
+                                                    .max()
+                                                    .orElse(0) + 1;
 
-                                                    ClubtimizerConfig.addAutoResponseRule(from, to);
-                                                    say("AutoResponse rule created", 0x55FF55);
-                                                    return 1;
-                                                })
-                                        )
+                                            ClubtimizerConfig.addAutoResponseRule(from, ".");
+                                            String msg =
+                                                    "§aAutoResponse rule created.\n" +
+                                                            "§aAdd values with edit §e" + index + " §aadd value <msg>";
+
+                                            say(TextUtil.fromLegacy(msg));
+
+                                            return 1;
+                                        })
                                 )
                         )
                         .then(ClientCommandManager.literal("delete")
@@ -293,7 +306,7 @@ public class ClubtimizerCommand {
 
                                         .then(ClientCommandManager.literal("add")
 
-                                                .then(ClientCommandManager.literal("key")
+                                                .then(ClientCommandManager.literal("from")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
                                                                 .executes(ctx -> {
                                                                     int index = Integer.parseInt(
@@ -313,7 +326,7 @@ public class ClubtimizerCommand {
                                                                 })
                                                         )
                                                 )
-                                                .then(ClientCommandManager.literal("value")
+                                                .then(ClientCommandManager.literal("to")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
                                                                 .executes(ctx -> {
                                                                     int index = Integer.parseInt(
