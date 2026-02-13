@@ -32,7 +32,7 @@ public class Cope {
         }
     }
 
-    private static void sayRandomPhrase(ClubtimizerConfig.AutoCopeConfig cfg) {
+    private static void sayRandomPhrase(ClubtimizerConfig.AutoCope cfg) {
         if (cfg.phrases.isEmpty()) return;
         String msg = cfg.phrases.get(ThreadLocalRandom.current().nextInt(cfg.phrases.size()));
         ChatUtil.delayedChat(msg, 200);
