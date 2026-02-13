@@ -88,33 +88,6 @@ public abstract class PlayerTabOverlayMixin {
         int latency = entry.getLatency();
         if (latency < 0 || latency == 1 || latency >= 1000) {
             ci.cancel();
-            return;
         }
-
-        if (Tablist.noBetterPing) {
-            ci.cancel();
-
-            String text = latency + "ms";
-            int tw = Clubtimizer.client.font.width(text);
-
-            graphics.drawString(
-                    Clubtimizer.client.font,
-                    text,
-                    x + width - tw - 1,
-                    y,
-                    PingUtil.getPingColor(latency),
-                    true
-            );
-        }
-    }
-
-    @ModifyExpressionValue(
-            method = "render",
-            at = @At(value = "CONSTANT", args = "intValue=13")
-    )
-    private int club$widenForPingText(int original) {
-        if (MCPVPStateChanger.get() == MCPVPState.NONE) return original;
-        if (FabricLoader.getInstance().isModLoaded("betterpingdisplay")) return original;
-        return Clubtimizer.client.font.width("xxxxms");
     }
 }

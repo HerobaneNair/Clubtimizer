@@ -61,8 +61,6 @@ public class Clubtimizer implements ClientModInitializer {
         });
 
         Totem.initReflection();
-
-        Tablist.noBetterPing = !FabricLoader.getInstance().isModLoaded("betterpingdisplay");
     }
 
     private static void updateIp(Minecraft minecraft) {
