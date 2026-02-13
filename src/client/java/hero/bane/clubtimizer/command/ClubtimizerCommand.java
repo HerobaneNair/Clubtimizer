@@ -488,24 +488,7 @@ public class ClubtimizerCommand {
                 .getVersion()
                 .getFriendlyString();
 
-        int versionReturned = 0;
-
-        try {
-            versionReturned = Integer.parseInt(
-                    clubtimizerVersion
-                            .substring(
-                                    clubtimizerVersion.indexOf('-') + 1,
-                                    clubtimizerVersion.indexOf('+')
-                            )
-                            .replaceAll("\\.", "")
-            );
-        } catch (Exception e) {
-            say(versionProblems, 0xFF5555);
-            Clubtimizer.LOGGER.error(versionProblems, e);
-        }
-
         say("Clubtimizer Version: " + clubtimizerVersion, 0xFFFFFF);
-        say("Returns: " + versionReturned, 0xAAAAAA);
 
         return 1;
     }
