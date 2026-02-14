@@ -57,7 +57,14 @@ public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "sendCommand", at = @At("HEAD"))
     private void club$resendPartyCommand(String command, CallbackInfo ci) {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
-        if (command.startsWith("party")) {
+        if (!command.startsWith("party ")) return;
+
+        int firstSpace = command.indexOf(' ');
+        if (firstSpace == -1 || firstSpace == command.length() - 1) return;
+
+        String sub = command.substring(firstSpace + 1);
+
+        if (!PartyMaker.PARTY_COMMAND_TAB_COMPLETES.contains(sub)) {
             PartyMaker.lastPartyCommand = "/" + command;
         }
     }

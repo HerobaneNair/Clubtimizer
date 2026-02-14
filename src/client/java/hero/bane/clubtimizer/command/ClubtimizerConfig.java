@@ -1,11 +1,17 @@
 package hero.bane.clubtimizer.command;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import hero.bane.clubtimizer.Clubtimizer;
 import net.fabricmc.loader.api.FabricLoader;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static hero.bane.clubtimizer.util.ChatUtil.say;
 
@@ -66,6 +72,7 @@ public final class ClubtimizerConfig {
     public static final class Lobby {
         public boolean hidePlayers = false;
         public boolean hideChat = false;
+        public boolean hidePublicParties = false;
         public boolean hitboxes = false;
         public boolean warning = true;
     }
@@ -188,6 +195,7 @@ public final class ClubtimizerConfig {
 
     public static void setLobbyHidePlayers(boolean b) { data.lobby.hidePlayers = b; save(); }
     public static void setLobbyHideChat(boolean b) { data.lobby.hideChat = b; save(); }
+    public static void setLobbyHidePublicParties(boolean b) { data.lobby.hidePublicParties = b; save(); }
     public static void setLobbyHitboxes(boolean b) { data.lobby.hitboxes = b; save(); }
     public static void setLobbyWarning(boolean b) { data.lobby.warning = b; save(); }
 

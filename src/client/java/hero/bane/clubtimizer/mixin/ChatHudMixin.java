@@ -46,6 +46,15 @@ public abstract class ChatHudMixin {
                 }
             }
 
+            if (ClubtimizerConfig.getLobby().hidePublicParties) {
+                int joinIndex = noFormatting.indexOf("[✔ Join]");
+
+                if (joinIndex >= 0) {
+                    ci.cancel();
+                    return;
+                }
+            }
+
             if (!ClubtimizerConfig.getLobby().warning
                     && noFormatting.startsWith("⚠ WARNING")) {
                 ci.cancel();
