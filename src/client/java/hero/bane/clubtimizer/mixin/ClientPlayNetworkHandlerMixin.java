@@ -66,6 +66,8 @@ public class ClientPlayNetworkHandlerMixin {
 
         if (!PartyMaker.PARTY_COMMAND_TAB_COMPLETES.contains(sub)) {
             PartyMaker.lastPartyCommand = "/" + command;
+        } else {
+            PartyMaker.lastPartyCommand = "";
         }
     }
 

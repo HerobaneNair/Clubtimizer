@@ -20,6 +20,7 @@ public class PartyMaker {
 
     public static void handleMessage(String text) {
         if (!text.contains(NOT_IN_PARTY)) return;
+        if (lastPartyCommand.isEmpty()) return;
 
         rightClickHorn();
 

@@ -4,6 +4,7 @@ import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.auto.Tablist;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -23,7 +24,7 @@ import java.util.List;
 public abstract class PlayerTabOverlayMixin {
 
     @Unique
-    private static final int TAB_MAX_RENDERED = 80;
+    private static final int TAB_MAX_RENDERED = 80; //I feel like there was a mod called wide tab list that increased this but I don't remember
 
     @Shadow
     protected abstract List<PlayerInfo> getPlayerInfos();
@@ -43,7 +44,9 @@ public abstract class PlayerTabOverlayMixin {
             CallbackInfo ci
     ) {
         if (!(MCPVPStateChanger.inGame()
-                || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) {
+                || MCPVPStateChanger.get() == MCPVPState.SPECTATING)
+                || !FabricLoader.getInstance().isModLoaded("betterpingdisplay")
+        ) {
             gatedTabSize = 0;
             return;
         }
