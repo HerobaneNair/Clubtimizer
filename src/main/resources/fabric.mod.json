@@ -27,5 +27,8 @@
     "fabricloader": ">=0.15.11",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}"
+  },
+  "suggests": {
+    "better-ping-display-fabric": "*"
   }
 }

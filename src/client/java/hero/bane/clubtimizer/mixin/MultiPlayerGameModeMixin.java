@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MultiPlayerGameMode.class)
-public class ClientPlayerInteractionManagerMixin {
+public class MultiPlayerGameModeMixin {
 
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
-    private void club$noProblemWindcharge(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
+    private void club$noProblemWindCharge(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
         if (player == null) return;
 
         if (MCPVPStateChanger.inLobby()) {

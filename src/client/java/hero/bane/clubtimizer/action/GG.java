@@ -2,9 +2,9 @@ package hero.bane.clubtimizer.action;
 
 import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.command.ClubtimizerConfig;
-import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 
 public class GG {
@@ -14,8 +14,7 @@ public class GG {
     public static void handleMessage(String text) {
         var cfg = ClubtimizerConfig.getAutoGG();
         if (!cfg.enabled || !MCPVPStateChanger.inGame()) return;
-
-        if (inSpawn()) return;
+        if (PlayerUtil.inSpawnArea()) return;
 
         long now = System.currentTimeMillis();
         boolean messageWorks = TextUtil.roundEnd(text, cfg.roundEnabled);
@@ -63,15 +62,5 @@ public class GG {
 
     public static void resetReactionWindowEnd() {
         reactionWindowEnd = System.currentTimeMillis();
-    }
-
-    public static boolean inSpawn() {
-        if (MCPVPStateChanger.get() == MCPVPState.NONE) return false;
-        var clientPlayer = Clubtimizer.player;
-        if (clientPlayer != null) {
-            double x = clientPlayer.getX(), z = clientPlayer.getZ();
-            return ((x > -300) && (x < 300) && (z > -300) && (z < 300));
-        }
-        return true;
     }
 }

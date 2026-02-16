@@ -42,7 +42,7 @@ public final class ClubtimizerConfig {
         public boolean allowSS = true;
         public boolean specChat = true;
         public String joinMessage =
-                "Hi, I have chat disabled, don't want to talk, just want to fight";
+                "Hi, I have chat disabled, don't want to talk, just want to fight [h-club]";
     }
 
     public static final class AutoGG {

@@ -1,6 +1,5 @@
 package hero.bane.clubtimizer.mixin;
 
-import hero.bane.clubtimizer.action.GG;
 import hero.bane.clubtimizer.action.Hush;
 import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
@@ -18,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChatComponent.class)
-public abstract class ChatHudMixin {
+public abstract class ChatComponentMixin {
 
     @Inject(
             method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
@@ -31,7 +30,7 @@ public abstract class ChatHudMixin {
             GuiMessageTag tag,
             CallbackInfo ci
     ) {
-        if (MCPVPStateChanger.inLobby() || GG.inSpawn()) {
+        if (MCPVPStateChanger.inLobby() || PlayerUtil.inSpawnArea()) {
             String noFormatting = message.getString();
 
             if (ClubtimizerConfig.getLobby().hideChat) {
@@ -39,7 +38,7 @@ public abstract class ChatHudMixin {
 
                 if (arrowIndex >= 0) {
                     String before = noFormatting.substring(0, arrowIndex).strip();
-                    String name = extractName(before);
+                    String name = club$extractName(before);
 
                     if (!PlayerUtil.isSelfOrFriend(name)) ci.cancel();
                     return;
@@ -47,9 +46,7 @@ public abstract class ChatHudMixin {
             }
 
             if (ClubtimizerConfig.getLobby().hidePublicParties) {
-                int joinIndex = noFormatting.indexOf("[✔ Join]");
-
-                if (joinIndex >= 0) {
+                if (noFormatting.isEmpty() || noFormatting.contains("[✔ Join]")) {
                     ci.cancel();
                     return;
                 }
@@ -79,7 +76,7 @@ public abstract class ChatHudMixin {
     }
 
     @Unique
-    private String extractName(String raw) {
+    private String club$extractName(String raw) {
         if (raw == null) return "";
         String stripped = TextUtil.stripFormatting(raw).strip();
         if (stripped.isEmpty()) return stripped;

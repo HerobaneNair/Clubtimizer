@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(ClientPacketListener.class)
-public class ClientPlayNetworkHandlerMixin {
+public class ClientPacketListenerMixin {
 
     @Inject(method = "handleSystemChat", at = @At("HEAD"))
     private void club$onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {

@@ -61,14 +61,6 @@ public class ChatUtil {
         delayedSay(text, 100);
     }
 
-    public static void delayedSay(Component text, boolean prepend, long delayMs) {
-        Clubtimizer.executor.schedule(() -> say(text, prepend), delayMs, TimeUnit.MILLISECONDS);
-    }
-
-    public static void delayedSay(Component text, boolean prepend) {
-        delayedSay(text, prepend, 100);
-    }
-
     public static void say(Component text) {
         say(text, true);
     }

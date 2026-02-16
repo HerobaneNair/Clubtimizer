@@ -54,7 +54,7 @@ public class Hush {
         var cfg = ClubtimizerConfig.getAutoHush();
         if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
         if (!matchJoin && !allowLobbyJoin) return;
-        ChatUtil.delayedChat(cfg.joinMessage + " [h-club]");
+        ChatUtil.delayedChat(cfg.joinMessage);
         matchJoin = false;
         allowLobbyJoin = false;
     }

@@ -491,7 +491,9 @@ public class ClubtimizerCommand {
         return 1;
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private static int debugger(CommandContext<FabricClientCommandSource> context) {
+        MCPVPStateChanger.update();
         LocalPlayer player = Clubtimizer.player;
         if (player == null || Clubtimizer.client.level == null) return 0;
 

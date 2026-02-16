@@ -5,6 +5,7 @@ import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.command.ClubtimizerConfig.AutoResponseRule;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 
 import java.util.Random;
 
@@ -15,7 +16,7 @@ public class Response {
 
     public static void handleMessage(String text) {
         var cfg = ClubtimizerConfig.getAutoResponse();
-        if (!cfg.enabled || !MCPVPStateChanger.inGame()) return;
+        if (!cfg.enabled || !MCPVPStateChanger.inGame() || PlayerUtil.inSpawnArea()) return;
 
         long now = System.currentTimeMillis();
         if (now <= reactionWindowEnd) return;

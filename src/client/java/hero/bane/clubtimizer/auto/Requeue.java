@@ -6,9 +6,9 @@ import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
-import hero.bane.clubtimizer.util.PingUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -21,7 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.ChatFormatting;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -33,6 +32,9 @@ public final class Requeue {
     private static final int LEAVE_COOLDOWN_TICKS = 20;
     private static final String MENU_KEYWORD = "Queue Duels";
 
+    private static final int CLICK_DELAY_TICKS = 2;
+    private static final int MAX_CLICK_DURATION_TICKS = 60; // failsafe
+
     public static final int[] SLOTS = {10, 11, 12, 13, 14, 15, 16, 22};
     public static final String[] GAMEMODES = {"Sword", "Axe", "Mace", "UHC", "Neth OP", "Pot", "SMP", "Vanilla"};
 
@@ -40,10 +42,6 @@ public final class Requeue {
     private static State state = State.IDLE;
 
     private static long lastLeaveTick = -LEAVE_COOLDOWN_TICKS;
-
-    private static boolean awaitingServerUpdate = false;
-    private static int lastStateId = -1;
-    private static long clickReadyTick = 0;
 
     private static final Deque<Integer> targetSlots = new ArrayDeque<>();
     private static final Deque<String> targetNames = new ArrayDeque<>();
@@ -58,6 +56,9 @@ public final class Requeue {
             Component.literal("Queued").withStyle(ChatFormatting.AQUA);
 
     private static String expectedMenuTitle = "";
+
+    private static long nextClickTick = 0;
+    private static long clickStartTick = 0;
 
     public static void handleTick(Minecraft client) {
         Player player = client.player;
@@ -105,43 +106,36 @@ public final class Requeue {
         if (!title.contains(MENU_KEYWORD)) return;
 
         expectedMenuTitle = title;
+
         initClickSequence();
 
-        lastStateId = screen.getMenu().getStateId();
-        clickReadyTick = tick + Math.max(1, PingUtil.getDynamicDelay(client, 1));
-        awaitingServerUpdate = false;
+        clickStartTick = tick;
+        nextClickTick = tick + CLICK_DELAY_TICKS;
 
         state = State.CLICKING;
     }
 
     private static void onClicking(Minecraft client, long tick) {
         AbstractContainerScreen<?> screen = getContainerScreen(client);
+
         if (screen == null) {
-            say("Stopping Clicking cause exited gui", 0xFFFFAA);
             reset();
             return;
         }
 
         if (!screen.getTitle().getString().equals(expectedMenuTitle)) {
-            say("Stopping Clicking cause changed gui", 0xFFAAAA);
             reset();
             return;
         }
 
-        int stateId = screen.getMenu().getStateId();
-
-        if (awaitingServerUpdate) {
-            if (stateId != lastStateId) {
-                awaitingServerUpdate = false;
-                clickReadyTick = tick + 1;
-            }
-            lastStateId = stateId;
+        // Hard timeout protection
+        if (tick - clickStartTick > MAX_CLICK_DURATION_TICKS) {
+            say("Requeue timeout — resetting.", 0xFF5555);
+            reset();
             return;
         }
 
-        lastStateId = stateId;
-
-        if (tick < clickReadyTick) return;
+        if (tick < nextClickTick) return;
 
         if (targetSlots.isEmpty()) {
             reset();
@@ -152,15 +146,21 @@ public final class Requeue {
         String name = targetNames.pollFirst();
 
         clickSlot(client, screen.getMenu().containerId, slot);
+
         assert name != null;
         say(qPrefix.copy().append(" ").append(TextUtil.rainbowGradient(name)));
 
-        awaitingServerUpdate = true;
+        nextClickTick = tick + CLICK_DELAY_TICKS;
+
+        if (targetSlots.isEmpty()) {
+            reset();
+        }
     }
 
     private static void reset() {
-        awaitingServerUpdate = false;
         state = State.IDLE;
+        targetSlots.clear();
+        targetNames.clear();
     }
 
     private static boolean isSwordTrigger(Minecraft client) {

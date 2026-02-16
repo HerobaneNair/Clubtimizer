@@ -1,10 +1,9 @@
 package hero.bane.clubtimizer.util;
 
 import hero.bane.clubtimizer.Clubtimizer;
-import hero.bane.clubtimizer.action.GG;
-import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.command.ClubtimizerConfig;
+import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 import net.minecraft.world.entity.Entity;
@@ -97,8 +96,8 @@ public class PlayerUtil {
         if (isFriend(name)) return false;
 
         if (isNpc(player)) return false;
-        if (Requeue.isInsideCylinder(player)) return false;
-        return GG.inSpawn();
+        if (inSumoArea(player)) return false;
+        return inSpawnArea();
     }
 
     public static boolean isNpc(Player p) {
@@ -141,5 +140,22 @@ public class PlayerUtil {
     public static boolean isFriend(String raw) {
         String name = normalizeName(raw);
         return FRIENDS.contains(name);
+    }
+
+    public static boolean inSumoArea(Player p) {
+        double px = p.getX() - 0.5;
+        double pz = p.getZ() - 63.5;
+        double py = p.getY();
+        return px * px + pz * pz <= 361 && py >= 99 && py <= 125;
+    }
+
+    public static boolean inSpawnArea() {
+        if (MCPVPStateChanger.get() == MCPVPState.NONE) return false;
+        var clientPlayer = Clubtimizer.player;
+        if (clientPlayer != null) {
+            double x = clientPlayer.getX(), z = clientPlayer.getZ();
+            return ((x > -300) && (x < 300) && (z > -300) && (z < 300));
+        }
+        return true;
     }
 }

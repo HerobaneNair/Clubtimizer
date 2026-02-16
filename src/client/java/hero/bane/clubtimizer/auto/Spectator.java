@@ -8,6 +8,7 @@ import hero.bane.clubtimizer.util.TextUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
@@ -128,7 +129,7 @@ public class Spectator {
             return;
         }
 
-        boolean entityLoaded = client.level.players().contains(followed);
+        boolean entityLoaded = client.level.players().contains((AbstractClientPlayer) followed);
         if (!entityLoaded) {
             ChatUtil.chat("/tp " + clean);
             return;
