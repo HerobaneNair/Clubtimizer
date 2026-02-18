@@ -127,7 +127,7 @@ public class MCPVPStateChanger {
     }
 
     private static boolean checkFFA(List<String> tab, boolean spectator) {
-        if (tab.isEmpty() || !tab.getFirst().contains("Duel")) return false;
+        if (tab.size() < 2 || !tab.getFirst().contains("Duel")) return false;
         if (tab.get(2).contains("§6🗡")) {
             setState(spectator ? MCPVPState.FFA_DEAD : MCPVPState.FFA);
             return true;
