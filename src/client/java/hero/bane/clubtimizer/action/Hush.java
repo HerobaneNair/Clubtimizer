@@ -15,14 +15,10 @@ public class Hush {
     public static boolean allowLobbyJoin = false;
 
     public static Component replaceMessage(Component msg) {
-        var cfg = ClubtimizerConfig.getAutoHush();
-        if (!cfg.enabled || !MCPVPStateChanger.inGame()) return msg;
-
-        var player = Clubtimizer.player;
-        if (player != null) {
-            double x = player.getX(), z = player.getZ();
-            if (x >= -300 && x <= 300 && z >= -300 && z <= 300) return msg;
-        }
+        var cfg1 = ClubtimizerConfig.getAutoHush();
+        var cfg2 = ClubtimizerConfig.getSpecChat();
+        if (!MCPVPStateChanger.inGame() || PlayerUtil.inSpawnArea()) return msg;
+        if (!cfg1.hushed && (cfg2.mode == ClubtimizerConfig.specChatMode.off)) return msg;
 
         String legacy = TextUtil.toLegacyString(msg);
         int arrowIndex = legacy.indexOf('»');
@@ -36,15 +32,20 @@ public class Hush {
 
         String lower = legacy.toLowerCase();
 
-        if (lower.contains("§#7a7a7a »")) {
-            return buildHidden(beforeArrow, afterArrow, false);
+        if (lower.contains("§#1fa5ff »")) {
+            if (cfg1.hushed) {
+                return buildHidden(beforeArrow, afterArrow, true);
+            } else {
+                return msg;
+            }
         }
 
-        if (lower.contains("§#1fa5ff »")) {
-            String cleaned = TextUtil.stripFormatting(afterArrow).trim().toLowerCase();
-            boolean isTrigger = GG.isTrigger(cleaned) || cleaned.equals("ss");
-            if (cfg.allowSS && isTrigger) return msg;
-            return buildHidden(beforeArrow, afterArrow, true);
+        if (lower.contains("§#7a7a7a »")) {
+            return switch (cfg2.mode) {
+                case ClubtimizerConfig.specChatMode.on -> msg;
+                case ClubtimizerConfig.specChatMode.compress -> buildHidden(beforeArrow, afterArrow, false);
+                case ClubtimizerConfig.specChatMode.off -> Component.literal("\uD83D\uDC41");
+            };
         }
 
         return msg;
@@ -52,7 +53,8 @@ public class Hush {
 
     public static void onMatchJoin() {
         var cfg = ClubtimizerConfig.getAutoHush();
-        if (!cfg.enabled || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty()) return;
+        if (cfg.hushed || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty() || cfg.joinMessage.equals("."))
+            return;
         if (!matchJoin && !allowLobbyJoin) return;
         ChatUtil.delayedChat(cfg.joinMessage);
         matchJoin = false;

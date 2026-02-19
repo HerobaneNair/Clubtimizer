@@ -36,6 +36,7 @@ public class ClubtimizerCommand {
                                 .then(buildConfig())
                                 .then(buildRequeue())
                                 .then(buildAutoHush())
+                                .then(buildSpecChat())
                                 .then(buildAutoGG())
                                 .then(buildAutoCope())
                                 .then(buildAutoResponse())
@@ -163,26 +164,66 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoHush() {
-        return literalToggleGroupRoot(
-                "autoHush",
-                () -> ClubtimizerConfig.getAutoHush().enabled,
-                ClubtimizerConfig::setAutoHushEnabled,
-                "AutoHush")
-                .then(toggleSub(
-                        "ss",
-                        () -> ClubtimizerConfig.getAutoHush().allowSS,
-                        ClubtimizerConfig::setAutoHushSS,
-                        "SS messages"
+        return ClientCommandManager.literal("autoHush")
+                .executes(ctx -> toggle(
+                        () -> ClubtimizerConfig.getAutoHush().hushed,
+                        ClubtimizerConfig::setAutoHushEnabled,
+                        "AutoHush"
                 ))
-                .then(toggleSub(
-                        "specChat",
-                        () -> ClubtimizerConfig.getAutoHush().specChat,
-                        ClubtimizerConfig::setAutoHushSpecChat,
-                        "Spectator messages"
-                ))
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx -> setToggle(true,
+                                ClubtimizerConfig::setAutoHushEnabled,
+                                "AutoHush"
+                        )))
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx -> setToggle(false,
+                                ClubtimizerConfig::setAutoHushEnabled,
+                                "AutoHush"
+                        )))
                 .then(ClientCommandManager.literal("setMsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
                                 .executes(ClubtimizerCommand::setAutoHushMessage)));
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildSpecChat() {
+        return ClientCommandManager.literal("specChat")
+                .executes(ctx -> {
+                    ClubtimizerConfig.specChatMode current =
+                            ClubtimizerConfig.getSpecChat().mode;
+
+                    ClubtimizerConfig.specChatMode next;
+
+                    switch (current) {
+                        case off -> next = ClubtimizerConfig.specChatMode.compress;
+                        case compress -> next = ClubtimizerConfig.specChatMode.on;
+                        default -> next = ClubtimizerConfig.specChatMode.off;
+                    }
+
+                    ClubtimizerConfig.setSpecChatMode(next);
+                    say("SpecChat set to " + next, 0x55FFFF);
+                    return 1;
+                })
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.off);
+                            say("SpecChat set to off", 0x55FFFF);
+                            return 1;
+                        }))
+                .then(ClientCommandManager.literal("compress")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.compress);
+                            say("SpecChat set to compress", 0x55FFFF);
+                            return 1;
+                        }))
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.on);
+                            say("SpecChat set to on", 0x55FFFF);
+                            return 1;
+                        }));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoGG() {
