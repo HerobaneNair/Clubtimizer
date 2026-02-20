@@ -6,6 +6,7 @@ import hero.bane.clubtimizer.command.ClubtimizerConfig.AutoResponseRule;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PlayerUtil;
+import hero.bane.clubtimizer.util.TextUtil;
 
 import java.util.Random;
 
@@ -30,20 +31,29 @@ public class Response {
 
         if (sender.equals(Clubtimizer.playerName.toLowerCase())) return;
 
-        String message = text.substring(arrow + 1).trim().toLowerCase();
+        String message = TextUtil.stripFormatting(
+                text.substring(arrow + 1)
+        ).trim().toLowerCase();
+
         if (message.isEmpty()) return;
+
+        String[] words = message.split("[^a-z0-9]+");
 
         for (AutoResponseRule rule : cfg.rules.values()) {
             for (String trigger : rule.from) {
-                if (message.contains(trigger)) {
-                    if (rule.to.isEmpty()) return;
+                String normalizedTrigger = trigger.toLowerCase();
 
-                    reactionWindowEnd = now + 1000L;
+                for (String word : words) {
+                    if (word.equals(normalizedTrigger)) {
+                        if (rule.to.isEmpty()) return;
 
-                    String response = rule.to.get(RANDOM.nextInt(rule.to.size()));
-                    ChatUtil.chat(response);
-                    ChatUtil.delayedSay(response, 0x55FFFF, 50);
-                    return;
+                        reactionWindowEnd = now + 1000L;
+
+                        String response = rule.to.get(RANDOM.nextInt(rule.to.size()));
+                        ChatUtil.chat(response);
+                        ChatUtil.delayedSay(response, 0x55FFFF, 50);
+                        return;
+                    }
                 }
             }
         }

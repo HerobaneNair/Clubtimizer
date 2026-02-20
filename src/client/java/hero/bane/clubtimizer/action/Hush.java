@@ -15,9 +15,10 @@ public class Hush {
     public static boolean allowLobbyJoin = false;
 
     public static Component replaceMessage(Component msg) {
+        if (!MCPVPStateChanger.inGame() || PlayerUtil.inSpawnArea()) return msg;
+
         var cfg1 = ClubtimizerConfig.getAutoHush();
         var cfg2 = ClubtimizerConfig.getSpecChat();
-        if (!MCPVPStateChanger.inGame() || PlayerUtil.inSpawnArea()) return msg;
         if (!cfg1.hushed && (cfg2.mode == ClubtimizerConfig.specChatMode.off)) return msg;
 
         String legacy = TextUtil.toLegacyString(msg);
@@ -26,6 +27,8 @@ public class Hush {
 
         String beforeArrow = legacy.substring(0, arrowIndex).strip();
         String afterArrow = legacy.substring(arrowIndex + 1).strip();
+
+        if (isAutoGGTrigger(afterArrow)) return msg;
 
         String realNamePart = cleanName(beforeArrow);
         if (isSelfOrFriend(realNamePart)) return msg;
@@ -42,7 +45,7 @@ public class Hush {
 
         if (lower.contains("§#7a7a7a »")) {
             return switch (cfg2.mode) {
-                case ClubtimizerConfig.specChatMode.on -> msg;
+                case ClubtimizerConfig.specChatMode.on -> (cfg1.hushed ? buildHidden(beforeArrow, afterArrow, false) : msg);
                 case ClubtimizerConfig.specChatMode.compress -> buildHidden(beforeArrow, afterArrow, false);
                 case ClubtimizerConfig.specChatMode.off -> Component.literal("\uD83D\uDC41");
             };
@@ -53,7 +56,7 @@ public class Hush {
 
     public static void onMatchJoin() {
         var cfg = ClubtimizerConfig.getAutoHush();
-        if (cfg.hushed || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty() || cfg.joinMessage.equals("."))
+        if (!cfg.hushed || Clubtimizer.client.player == null || cfg.joinMessage.isEmpty() || cfg.joinMessage.equals("."))
             return;
         if (!matchJoin && !allowLobbyJoin) return;
         ChatUtil.delayedChat(cfg.joinMessage);
@@ -85,26 +88,33 @@ public class Hush {
         return PlayerUtil.isFriend(name);
     }
 
+    private static boolean isAutoGGTrigger(String afterArrow) {
+        if (afterArrow == null) return false;
+
+        String cleaned = TextUtil.stripFormatting(afterArrow)
+                .strip()
+                .toLowerCase();
+
+        if (cleaned.isEmpty()) return false;
+
+        int spaceIdx = cleaned.indexOf(' ');
+        if (spaceIdx > 0) cleaned = cleaned.substring(0, spaceIdx);
+
+        return GG.isTrigger(cleaned);
+    }
+
     private static Component buildHidden(String beforeArrow, String afterArrow, boolean playerChat) {
-        String prefix = playerChat
-                ? beforeArrow + "§#1FA5FF » "
-                : beforeArrow + "§#7A7A7A » ";
+        String prefix = playerChat ? beforeArrow + "§#1FA5FF » " : beforeArrow + "§#7A7A7A » ";
 
         MutableComponent base = (MutableComponent) TextUtil.fromLegacy(prefix);
 
         String hoverText = TextUtil.stripFormatting(afterArrow).trim();
         int len = afterArrow.length();
         String maskColor = playerChat ? "§7§m" : "§8§m";
-        MutableComponent hiddenPart =
-                (MutableComponent) TextUtil.fromLegacy(maskColor + " ".repeat(len));
+        MutableComponent hiddenPart = (MutableComponent) TextUtil.fromLegacy(maskColor + " ".repeat(len));
 
         if (!hoverText.isEmpty()) {
-            hiddenPart.withStyle(style ->
-                    style
-                            .withHoverEvent(new HoverEvent.ShowText(
-                                    Component.literal(hoverText)
-                            ))
-            );
+            hiddenPart.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(Component.literal(hoverText))));
             Clubtimizer.LOGGER.info("Message: {}", hoverText);
         }
 
