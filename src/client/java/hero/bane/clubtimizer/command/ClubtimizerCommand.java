@@ -182,6 +182,11 @@ public class ClubtimizerCommand {
                         )))
                 .then(ClientCommandManager.literal("setMsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
+                                .suggests((ctx, b) -> {
+                                    b.suggest(ClubtimizerConfig.getAutoHush().joinMessage);
+                                    b.suggest(".");
+                                    return b.buildFuture();
+                                })
                                 .executes(ClubtimizerCommand::setAutoHushMessage)));
     }
 
