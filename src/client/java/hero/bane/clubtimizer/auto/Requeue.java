@@ -6,73 +6,65 @@ import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
-import hero.bane.clubtimizer.util.TextUtil;
+import hero.bane.clubtimizer.util.PlayerUtil;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
-import static hero.bane.clubtimizer.util.ChatUtil.say;
+import java.util.Arrays;
 
 public final class Requeue {
 
-    private static final int LEAVE_COOLDOWN_TICKS = 20;
     private static final String MENU_KEYWORD = "Queue Duels";
-
-    private static final int CLICK_DELAY_TICKS = 2;
-    private static final int MAX_CLICK_DURATION_TICKS = 60; // failsafe
 
     public static final int[] SLOTS = {10, 11, 12, 13, 14, 15, 16, 22};
     public static final String[] GAMEMODES = {"Sword", "Axe", "Mace", "UHC", "Neth OP", "Pot", "SMP", "Vanilla"};
 
-    private enum State { IDLE, WAITING_MENU, CLICKING }
+    private enum State {IDLE, WAITING_MENU, ACTIVE}
+
     private static State state = State.IDLE;
 
-    private static long lastLeaveTick = -LEAVE_COOLDOWN_TICKS;
-
-    private static final Deque<Integer> targetSlots = new ArrayDeque<>();
-    private static final Deque<String> targetNames = new ArrayDeque<>();
-
+    private static long lastLeaveTick = -20;
     private static boolean attackHeldGuard = false;
 
     private static String cachedOrder = "";
     private static int[] cachedTargets = SLOTS.clone();
     private static String[] cachedNames = GAMEMODES.clone();
 
-    private static final MutableComponent qPrefix =
-            Component.literal("Queued").withStyle(ChatFormatting.AQUA);
+    private static final int[] attemptCounts = new int[SLOTS.length];
 
     private static String expectedMenuTitle = "";
+    private static int expectedContainerId = -1;
 
-    private static long nextClickTick = 0;
-    private static long clickStartTick = 0;
+    private static long startTick = 0;
+    private static long lastClickTick = -5;
+
+    private static boolean containerDirty = false;
 
     public static void handleTick(Minecraft client) {
         Player player = client.player;
         if (player == null || client.level == null) return;
 
         long tick = client.level.getGameTime();
-        boolean attackPressed = client.options.keyAttack.isDown();
+        boolean attackPressed = client.options.keyAttack.isDown() &&
+                (MCPVPStateChanger.get() == MCPVPState.IN_QUEUE || client.options.keyShift.isDown());
 
         if (!attackPressed) attackHeldGuard = false;
 
         switch (state) {
             case IDLE -> onIdle(client, tick, attackPressed);
             case WAITING_MENU -> onWaitingMenu(client, tick);
-            case CLICKING -> onClicking(client, tick);
+            case ACTIVE -> onActive(client, tick);
         }
     }
 
@@ -91,7 +83,7 @@ public final class Requeue {
         }
 
         if (pvpState == MCPVPState.IN_QUEUE) {
-            if (tick - lastLeaveTick >= LEAVE_COOLDOWN_TICKS) {
+            if (tick - lastLeaveTick >= 20) {
                 ChatUtil.chat("/leave");
                 lastLeaveTick = tick;
             }
@@ -106,68 +98,113 @@ public final class Requeue {
         if (!title.contains(MENU_KEYWORD)) return;
 
         expectedMenuTitle = title;
+        expectedContainerId = screen.getMenu().containerId;
 
-        initClickSequence();
+        parseOrder();
+        Arrays.fill(attemptCounts, 0);
 
-        clickStartTick = tick;
-        nextClickTick = tick + CLICK_DELAY_TICKS;
+        startTick = tick;
+        containerDirty = true;
 
-        state = State.CLICKING;
+        state = State.ACTIVE;
     }
 
-    private static void onClicking(Minecraft client, long tick) {
+    private static void onActive(Minecraft client, long tick) {
         AbstractContainerScreen<?> screen = getContainerScreen(client);
+        if (isInvalid(client, screen)) return;
+
+        if (tick - startTick > 240) {
+            ChatUtil.say("Timed Out");
+            reset();
+            return;
+        }
+
+        boolean failsafeTrigger =
+                !containerDirty
+                        && MCPVPStateChanger.get() == MCPVPState.IN_QUEUE
+                        && tick - lastClickTick >= 5;
+
+        if (!containerDirty && !failsafeTrigger) return;
+
+        containerDirty = false;
+
+        boolean allQueued = true;
+
+        for (int i = 0; i < cachedTargets.length; i++) {
+            int slot = cachedTargets[i];
+            String mode = cachedNames[i];
+
+            if (!isQueued(screen, slot)) {
+                allQueued = false;
+                attemptCounts[i]++;
+                clickSlot(client, expectedContainerId, slot);
+                lastClickTick = tick;
+            } else {
+                if (attemptCounts[i] != -1) {
+                    ChatUtil.say("Queued into " + mode, 0x55FF55);
+                    attemptCounts[i] = -1;
+                }
+            }
+        }
+
+        if (allQueued) {
+            reset();
+        }
+    }
+
+    private static boolean isInvalid(Minecraft client, AbstractContainerScreen<?> screen) {
+        Player player = client.player;
+        if (player == null || client.level == null) {
+            reset();
+            return true;
+        }
+
+        if (player.hasEffect(MobEffects.BLINDNESS)) {
+            reset();
+            return true;
+        }
 
         if (screen == null) {
             reset();
-            return;
+            return true;
+        }
+
+        if (expectedContainerId != screen.getMenu().containerId) {
+            reset();
+            return true;
         }
 
         if (!screen.getTitle().getString().equals(expectedMenuTitle)) {
             reset();
-            return;
+            return true;
         }
 
-        // Hard timeout protection
-        if (tick - clickStartTick > MAX_CLICK_DURATION_TICKS) {
-            say("Requeue timeout — resetting.", 0xFF5555);
-            reset();
-            return;
-        }
+        return false;
+    }
 
-        if (tick < nextClickTick) return;
+    private static boolean isQueued(AbstractContainerScreen<?> screen, int slot) {
+        if (slot < 0 || slot >= screen.getMenu().slots.size()) return false;
 
-        if (targetSlots.isEmpty()) {
-            reset();
-            return;
-        }
+        ItemStack stack = screen.getMenu().getSlot(slot).getItem();
+        if (stack.isEmpty()) return false;
 
-        int slot = targetSlots.pollFirst();
-        String name = targetNames.pollFirst();
-
-        clickSlot(client, screen.getMenu().containerId, slot);
-
-        assert name != null;
-        say(qPrefix.copy().append(" ").append(TextUtil.rainbowGradient(name)));
-
-        nextClickTick = tick + CLICK_DELAY_TICKS;
-
-        if (targetSlots.isEmpty()) {
-            reset();
-        }
+        Component name = stack.getHoverName();
+        return name.getString().endsWith("(Queued)");
     }
 
     private static void reset() {
         state = State.IDLE;
-        targetSlots.clear();
-        targetNames.clear();
+        expectedMenuTitle = "";
+        expectedContainerId = -1;
+        containerDirty = false;
+        lastClickTick = -5;
     }
 
     private static boolean isSwordTrigger(Minecraft client) {
         Player player = client.player;
         if (player == null) return false;
 
-        if (isInsideCylinder(player)) return false;
+        if (PlayerUtil.inSumoArea(player)) return false;
         if (player.getInventory().getSelectedSlot() != 0) return false;
 
         ItemStack stack = player.getMainHandItem();
@@ -188,25 +225,23 @@ public final class Requeue {
     }
 
     private static void clickSlot(Minecraft client, int containerId, int slot) {
-        if (client.gameMode != null && client.player != null) {
-            client.gameMode.handleInventoryMouseClick(
-                    containerId,
-                    slot,
-                    0,
-                    ClickType.QUICK_MOVE,
-                    client.player
-            );
-        }
-    }
+        if (client.gameMode == null || client.player == null) return;
 
-    private static void initClickSequence() {
-        parseOrder();
-        targetSlots.clear();
-        targetNames.clear();
-        for (int i = 0; i < cachedTargets.length; i++) {
-            targetSlots.addLast(cachedTargets[i]);
-            targetNames.addLast(cachedNames[i]);
-        }
+        AbstractContainerScreen<?> screen = getContainerScreen(client);
+        if (screen == null) return;
+
+        if (slot < 0 || slot >= screen.getMenu().slots.size()) return;
+
+        ItemStack stack = screen.getMenu().getSlot(slot).getItem();
+        if (stack.isEmpty()) return;
+
+        client.gameMode.handleInventoryMouseClick(
+                containerId,
+                slot,
+                0,
+                ClickType.QUICK_MOVE,
+                client.player
+        );
     }
 
     private static void parseOrder() {
@@ -228,10 +263,10 @@ public final class Requeue {
         int out = 0;
 
         for (int i = 0; i < len; i++) {
-            int idx = order.charAt(i) - '1';
-            if (idx >= 0 && idx < SLOTS.length) {
-                slots[out] = SLOTS[idx];
-                names[out] = GAMEMODES[idx];
+            int i1 = order.charAt(i) - '1';
+            if (i1 >= 0 && i1 < SLOTS.length) {
+                slots[out] = SLOTS[i1];
+                names[out] = GAMEMODES[i1];
                 out++;
             }
         }
@@ -250,22 +285,17 @@ public final class Requeue {
         cachedOrder = order;
     }
 
+    public static void containerChanged(int containerId) {
+        if (state == State.ACTIVE && containerId == expectedContainerId) {
+            containerDirty = true;
+        }
+    }
+
     public static int handleRequeue(CommandContext<FabricClientCommandSource> ctx) {
         String input = StringArgumentType.getString(ctx, "order");
-
-        if (!isValidSequence(input)) {
-            say("Invalid: use unique digits 1–8", 0xFF5555, true);
-            return 0;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            sb.append(GAMEMODES[input.charAt(i) - '1']).append("\n");
-        }
+        if (!isValidSequence(input)) return 0;
 
         ClubtimizerConfig.setRequeueOrder(input);
-        say("Requeue order set:");
-        say(sb.toString().trim(), 0xFFAA55, false);
         return 1;
     }
 
@@ -275,17 +305,10 @@ public final class Requeue {
 
         boolean[] seen = new boolean[GAMEMODES.length];
         for (int i = 0; i < len; i++) {
-            int idx = input.charAt(i) - '1';
-            if (idx < 0 || idx >= GAMEMODES.length || seen[idx]) return false;
-            seen[idx] = true;
+            int i1 = input.charAt(i) - '1';
+            if (i1 < 0 || i1 >= GAMEMODES.length || seen[i1]) return false;
+            seen[i1] = true;
         }
         return true;
-    }
-
-    public static boolean isInsideCylinder(Player p) {
-        double px = p.getX() - 0.5;
-        double pz = p.getZ() - 63.5;
-        double py = p.getY();
-        return px * px + pz * pz <= 361 && py >= 99 && py <= 125;
     }
 }
