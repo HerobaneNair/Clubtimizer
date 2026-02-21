@@ -56,8 +56,7 @@ public final class Requeue {
         if (player == null || client.level == null) return;
 
         long tick = client.level.getGameTime();
-        boolean attackPressed = client.options.keyAttack.isDown() &&
-                (MCPVPStateChanger.get() == MCPVPState.IN_QUEUE || client.options.keyShift.isDown());
+        boolean attackPressed = client.options.keyAttack.isDown() && client.options.keyShift.isDown();
 
         if (!attackPressed) attackHeldGuard = false;
 
