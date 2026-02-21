@@ -3,17 +3,16 @@ package hero.bane.clubtimizer.mixin;
 import hero.bane.clubtimizer.action.Cope;
 import hero.bane.clubtimizer.action.GG;
 import hero.bane.clubtimizer.action.Response;
-import hero.bane.clubtimizer.auto.PartyMaker;
-import hero.bane.clubtimizer.auto.Rematch;
-import hero.bane.clubtimizer.auto.Spectator;
-import hero.bane.clubtimizer.auto.Totem;
+import hero.bane.clubtimizer.auto.*;
 import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
+import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PlayerUtil;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -85,5 +84,12 @@ public class ClientPacketListenerMixin {
     @Inject(method = "handleRemoveEntities", at = @At("HEAD"))
     private void club$specDeath(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
         Spectator.onEntitiesDestroyed(packet.getEntityIds());
+    }
+
+    @Inject(method = "handleContainerContent", at = @At("TAIL"))
+    private void club$containerChange(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        if (!MCPVPStateChanger.inLobby()) return;
+        ChatUtil.say("containerChangePacket");
+        Requeue.containerChanged(packet.containerId());
     }
 }
