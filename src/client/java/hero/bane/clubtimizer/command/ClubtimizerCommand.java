@@ -47,6 +47,16 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildLobby() {
         return ClientCommandManager.literal("lobby")
+                .executes(ctx -> {
+                    var cfg = ClubtimizerConfig.getLobby();
+                    say("Lobby Values: " +
+                            "\n  Turn on hitboxes while connecting: " + cfg.hitboxes +
+                            "\n  Hide Players in lobby: " + cfg.hidePlayers +
+                            "\n  Hide Player Chat in lobby: " + cfg.hideChat +
+                            "\n  Hide Public Parties in lobby: " + cfg.hidePublicParties +
+                            "\n  Hide Warnings in lobby: " + cfg.warning);
+                    return 1;
+                })
                 .then(ClientCommandManager.literal("hidePlayers")
                         .executes(ctx -> toggle(
                                 () -> ClubtimizerConfig.getLobby().hidePlayers,
