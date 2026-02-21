@@ -7,6 +7,7 @@ import hero.bane.clubtimizer.auto.PartyMaker;
 import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.auto.Totem;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.PlayerUtil;
@@ -68,6 +69,16 @@ public class ClientPacketListenerMixin {
             PartyMaker.lastPartyCommand = "/" + command;
         } else {
             PartyMaker.lastPartyCommand = "";
+        }
+    }
+
+    @Inject(method = "sendChat", at = @At("HEAD"))
+    private void club$checkManualGG(String message, CallbackInfo ci) {
+        if (!MCPVPStateChanger.inGame()) return;
+        var cfg = ClubtimizerConfig.getAutoGG();
+        if (!cfg.enabled || !cfg.reactionary) return;
+        if (GG.isTrigger(message)) {
+            GG.setReactionWindow();
         }
     }
 

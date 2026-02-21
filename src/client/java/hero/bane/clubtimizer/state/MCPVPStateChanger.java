@@ -238,7 +238,7 @@ public class MCPVPStateChanger {
         Hush.matchJoin = true;
         Hush.allowLobbyJoin = true;
         Rematch.triggered = false;
-        GG.resetReactionWindowEnd();
+        GG.resetReactionWindow();
         Totem.resetCounter();
         PlayerUtil.requestUpdate();
     }
