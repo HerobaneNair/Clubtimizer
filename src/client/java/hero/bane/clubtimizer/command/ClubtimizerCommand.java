@@ -205,28 +205,28 @@ public class ClubtimizerCommand {
                     }
 
                     ClubtimizerConfig.setSpecChatMode(next);
-                    say("SpecChat set to " + next, 0x55FFFF);
+                    specChatOut(next);
                     return 1;
                 })
                 .then(ClientCommandManager.literal("off")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.off);
-                            say("SpecChat set to off", 0x55FFFF);
+                            specChatOut(ClubtimizerConfig.specChatMode.off);
                             return 1;
                         }))
                 .then(ClientCommandManager.literal("compress")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.compress);
-                            say("SpecChat set to compress", 0x55FFFF);
+                            specChatOut(ClubtimizerConfig.specChatMode.compress);
                             return 1;
                         }))
                 .then(ClientCommandManager.literal("on")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.on);
-                            say("SpecChat set to on", 0x55FFFF);
+                            specChatOut(ClubtimizerConfig.specChatMode.on);
                             return 1;
                         }));
     }
@@ -556,5 +556,19 @@ public class ClubtimizerCommand {
         say("Clubtimizer Version: " + clubtimizerVersion, 0xFFFFFF);
 
         return 1;
+    }
+
+    private static void specChatOut(ClubtimizerConfig.specChatMode mode) {
+        switch (mode) {
+            case on:
+                say("Spectator Chat is now visible", 0x55FF55);
+                break;
+            case compress:
+                say("Spectator Chat is now compressed", 0x55FFFF);
+                break;
+            case off:
+                say("Spectator Chat is no longer visible", 0xFF5555);
+                break;
+        }
     }
 }

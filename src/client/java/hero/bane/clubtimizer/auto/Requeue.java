@@ -7,13 +7,16 @@ import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PlayerUtil;
+import hero.bane.clubtimizer.util.TextUtil;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -29,6 +32,8 @@ public final class Requeue {
 
     public static final int[] SLOTS = {10, 11, 12, 13, 14, 15, 16, 22};
     public static final String[] GAMEMODES = {"Sword", "Axe", "Mace", "UHC", "Neth OP", "Pot", "SMP", "Vanilla"};
+    private static final MutableComponent qPrefix =
+            Component.literal("Queued into ").withStyle(ChatFormatting.AQUA);
 
     private enum State {IDLE, WAITING_MENU, ACTIVE}
 
@@ -140,7 +145,7 @@ public final class Requeue {
                 lastClickTick = tick;
             } else {
                 if (attemptCounts[i] != -1) {
-                    ChatUtil.say("Queued into " + mode, 0x55FF55);
+                    ChatUtil.say(qPrefix.copy().append(TextUtil.rainbowGradient(mode)));
                     attemptCounts[i] = -1;
                 }
             }
