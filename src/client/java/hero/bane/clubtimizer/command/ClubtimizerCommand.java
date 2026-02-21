@@ -165,16 +165,22 @@ public class ClubtimizerCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoHush() {
         return ClientCommandManager.literal("autoHush")
-                .executes(ctx -> toggle(
-                        () -> ClubtimizerConfig.getAutoHush().hushed,
-                        ClubtimizerConfig::setAutoHushEnabled,
-                        "AutoHush"
-                ))
+                .executes(ctx -> {
+                    if (!ClubtimizerConfig.getAutoHush().hushed) say("Spectator Chat will be force-compressed while set to visible", 0xFFCC55);
+                    return toggle(
+                            () -> ClubtimizerConfig.getAutoHush().hushed,
+                            ClubtimizerConfig::setAutoHushEnabled,
+                            "AutoHush"
+                    );
+                })
                 .then(ClientCommandManager.literal("on")
-                        .executes(ctx -> setToggle(true,
-                                ClubtimizerConfig::setAutoHushEnabled,
-                                "AutoHush"
-                        )))
+                        .executes(ctx -> {
+                            say("Spectator Chat will be compressed while on", 0xFFCC55);
+                            return setToggle(true,
+                                    ClubtimizerConfig::setAutoHushEnabled,
+                                    "AutoHush"
+                            );
+                        }))
                 .then(ClientCommandManager.literal("off")
                         .executes(ctx -> setToggle(false,
                                 ClubtimizerConfig::setAutoHushEnabled,
@@ -199,34 +205,34 @@ public class ClubtimizerCommand {
                     ClubtimizerConfig.specChatMode next;
 
                     switch (current) {
-                        case off -> next = ClubtimizerConfig.specChatMode.compress;
-                        case compress -> next = ClubtimizerConfig.specChatMode.on;
-                        default -> next = ClubtimizerConfig.specChatMode.off;
+                        case hidden -> next = ClubtimizerConfig.specChatMode.compressed;
+                        case compressed -> next = ClubtimizerConfig.specChatMode.visible;
+                        default -> next = ClubtimizerConfig.specChatMode.hidden;
                     }
 
                     ClubtimizerConfig.setSpecChatMode(next);
-                    say("SpecChat set to " + next, 0x55FFFF);
+                    specChatOut(next);
                     return 1;
                 })
-                .then(ClientCommandManager.literal("off")
+                .then(ClientCommandManager.literal("hidden")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.off);
-                            say("SpecChat set to off", 0x55FFFF);
+                                    ClubtimizerConfig.specChatMode.hidden);
+                            specChatOut(ClubtimizerConfig.specChatMode.hidden);
                             return 1;
                         }))
-                .then(ClientCommandManager.literal("compress")
+                .then(ClientCommandManager.literal("compressed")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.compress);
-                            say("SpecChat set to compress", 0x55FFFF);
+                                    ClubtimizerConfig.specChatMode.compressed);
+                            specChatOut(ClubtimizerConfig.specChatMode.compressed);
                             return 1;
                         }))
-                .then(ClientCommandManager.literal("on")
+                .then(ClientCommandManager.literal("visible")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.on);
-                            say("SpecChat set to on", 0x55FFFF);
+                                    ClubtimizerConfig.specChatMode.visible);
+                            specChatOut(ClubtimizerConfig.specChatMode.visible);
                             return 1;
                         }));
     }
@@ -556,5 +562,19 @@ public class ClubtimizerCommand {
         say("Clubtimizer Version: " + clubtimizerVersion, 0xFFFFFF);
 
         return 1;
+    }
+
+    private static void specChatOut(ClubtimizerConfig.specChatMode mode) {
+        switch (mode) {
+            case visible:
+                say("Spectator Chat is now visible", 0x55FF55);
+                break;
+            case compressed:
+                say("Spectator Chat is now compressed", 0xFFCC55);
+                break;
+            case hidden:
+                say("Spectator Chat is no longer visible", 0xFF5555);
+                break;
+        }
     }
 }

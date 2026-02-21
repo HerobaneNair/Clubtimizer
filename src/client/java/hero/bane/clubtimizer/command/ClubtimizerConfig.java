@@ -46,13 +46,13 @@ public final class ClubtimizerConfig {
     }
 
     public static final class SpecChat {
-        public specChatMode mode = specChatMode.on;
+        public specChatMode mode = specChatMode.visible;
     }
 
     public enum specChatMode {
-        on,
-        compress,
-        off
+        visible,
+        compressed,
+        hidden
     }
 
     public static final class AutoGG {
@@ -155,7 +155,7 @@ public final class ClubtimizerConfig {
             rewrite = true;
         }
         if (data.specChat.mode == null) {
-            data.specChat.mode = specChatMode.off;
+            data.specChat.mode = specChatMode.hidden;
             rewrite = true;
         }
 
@@ -228,8 +228,6 @@ public final class ClubtimizerConfig {
     public static void setAutoHushEnabled(boolean b) { data.autoHush.hushed = b; save(); }
     public static void setAutoHushMessage(String s) { data.autoHush.joinMessage = s; save(); }
     public static void setSpecChatMode(specChatMode m) { data.specChat.mode = m; save(); }
-
-
 
     public static AutoGG getAutoGG() { return data.autoGG; }
 

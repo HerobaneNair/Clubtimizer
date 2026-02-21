@@ -59,7 +59,7 @@ public abstract class ChatComponentMixin {
         }
 
         if (MCPVPStateChanger.inGame()
-                && ClubtimizerConfig.getSpecChat().mode == ClubtimizerConfig.specChatMode.off) {
+                && ClubtimizerConfig.getSpecChat().mode == ClubtimizerConfig.specChatMode.hidden) {
             if (TextUtil.toLegacyString(message).contains("§#7a7a7a »") || message.getString().startsWith("\uD83D\uDC41")) {
                 ci.cancel();
             }
