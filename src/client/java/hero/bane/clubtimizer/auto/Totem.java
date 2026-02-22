@@ -86,11 +86,11 @@ public class Totem {
         reactionWindowEnd = now + 2000L;
     }
 
-    private static int invokeGetCount(Player player) {
-        try {
-            return (int) getPopsMethod.invoke(null, player);
-        } catch (Throwable ignored) {
-            return 0;
-        }
-    }
+//    private static int invokeGetCount(Player player) {
+//        try {
+//            return (int) getPopsMethod.invoke(null, player);
+//        } catch (Throwable ignored) {
+//            return 0;
+//        }
+//    }
 }
