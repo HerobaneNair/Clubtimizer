@@ -2,14 +2,11 @@ package hero.bane.clubtimizer.auto;
 
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
-import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 
 import java.lang.reflect.Method;
-import java.util.Comparator;
 
 public class Totem {
     private static long reactionWindowEnd = 0;
@@ -28,7 +25,7 @@ public class Totem {
         try {
             Class<?> cls = Class.forName("net.uku3lig.totemcounter.TotemCounter");
             resetMethod = cls.getMethod("resetPopCounter");
-//            getPopsMethod = cls.getMethod("getCount", Player.class);
+            //            getPopsMethod = cls.getMethod("getCount", Player.class);
             reflectionEnabled = true;
         } catch (Throwable ignored) {
             reflectionEnabled = false;
@@ -49,30 +46,30 @@ public class Totem {
         }
     }
 
-    public static void handleTick(Minecraft minecraft) {
-        if (!reflectionEnabled || saidTotemFarmInChat) return;
-        if (minecraft.level == null || minecraft.player == null) return;
-
-        long tick = minecraft.level.getGameTime();
-        if ((tick % 20) != 0) return;
-
-        Player self = minecraft.player;
-
-        Player nearest = minecraft.level.players().stream()
-                .filter(p -> p != self)
-                .filter(p -> !p.isRemoved())
-                .min(Comparator.comparingDouble(a -> a.distanceToSqr(self)))
-                .orElse(null);
-
-        if (nearest == null) return;
-
-        int pops = invokeGetCount(nearest);
-
-        if (pops > 14) {
-            ChatUtil.say("Popped opponent 15 times [14+death]");
-            saidTotemFarmInChat = true;
-        }
-    }
+//    public static void handleTick(Minecraft minecraft) {
+//        if (!reflectionEnabled || saidTotemFarmInChat) return;
+//        if (minecraft.level == null || minecraft.player == null) return;
+//
+//        long tick = minecraft.level.getGameTime();
+//        if ((tick % 20) != 0) return;
+//
+//        Player self = minecraft.player;
+//
+//        Player nearest = minecraft.level.players().stream()
+//                .filter(p -> p != self)
+//                .filter(p -> !p.isRemoved())
+//                .min(Comparator.comparingDouble(a -> a.distanceToSqr(self)))
+//                .orElse(null);
+//
+//        if (nearest == null) return;
+//
+//        int pops = invokeGetCount(nearest);
+//
+//        if (pops > 14) {
+//            ChatUtil.say("Popped opponent 15 times [14+death]");
+//            saidTotemFarmInChat = true;
+//        }
+//    }
 
     public static void resetCounter() {
         if (!reflectionEnabled) return;

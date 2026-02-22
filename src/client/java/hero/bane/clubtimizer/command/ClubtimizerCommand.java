@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 import static hero.bane.clubtimizer.util.ChatUtil.say;
 
 public class ClubtimizerCommand {
-    private static final String NEW_AR_RULE_HINT = " from (only inputs, use add to add outputs, separate with |'s) ";
+    private static final String AUTORESPONSE_ARGUMENT = " from (only inputs, use add to add outputs, separate with |'s) ";
 
     public static void register() {
         ClubtimizerConfig.load();
@@ -218,21 +218,21 @@ public class ClubtimizerCommand {
                     specChatOut(next);
                     return 1;
                 })
-                .then(ClientCommandManager.literal("off")
+                .then(ClientCommandManager.literal("hidden")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.hidden);
                             specChatOut(ClubtimizerConfig.specChatMode.hidden);
                             return 1;
                         }))
-                .then(ClientCommandManager.literal("compress")
+                .then(ClientCommandManager.literal("compressed")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.compressed);
                             specChatOut(ClubtimizerConfig.specChatMode.compressed);
                             return 1;
                         }))
-                .then(ClientCommandManager.literal("on")
+                .then(ClientCommandManager.literal("visible")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
                                     ClubtimizerConfig.specChatMode.visible);
@@ -322,9 +322,9 @@ public class ClubtimizerCommand {
                                 )
                         )
                         .then(ClientCommandManager.literal("new")
-                                .then(ClientCommandManager.argument(NEW_AR_RULE_HINT, StringArgumentType.greedyString())
+                                .then(ClientCommandManager.argument(AUTORESPONSE_ARGUMENT, StringArgumentType.greedyString())
                                         .executes(ctx -> {
-                                            String from = StringArgumentType.getString(ctx, NEW_AR_RULE_HINT);
+                                            String from = StringArgumentType.getString(ctx, AUTORESPONSE_ARGUMENT);
                                             int index = ClubtimizerConfig.getAutoResponse().rules
                                                     .keySet()
                                                     .stream()
