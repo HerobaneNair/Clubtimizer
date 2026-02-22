@@ -6,12 +6,7 @@ import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.TextUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.*;
 
 import java.util.List;
 
@@ -26,7 +21,6 @@ public class Rematch {
 
     public static void handleMessage(String text) {
         if (!TextUtil.roundEnd(text, false) || triggered) return;
-        triggered = true;
 
         var client = Clubtimizer.client;
         var player = client.player;
@@ -35,7 +29,29 @@ public class Rematch {
         MCPVPState state = MCPVPStateChanger.get();
         if (state != MCPVPState.RED && state != MCPVPState.BLUE) return;
 
-        String opponent = parseOpponent(client);
+        sendRematchMessage();
+    }
+
+    private static String parseOpponent() {
+        List<String> lines = TextUtil.getOrderedTabList(Clubtimizer.client);
+        if (lines.isEmpty()) return null;
+
+        String self = Clubtimizer.playerName;
+
+        for (String raw : lines) {
+            String clean = TextUtil.stripFormatting(raw).trim();
+
+            if (!clean.contains(self) && clean.contains("ms")) {
+                String[] parts = clean.split(" ");
+                return parts.length >= 2 ? parts[1] : null;
+            }
+        }
+        return null;
+    }
+
+    public static void sendRematchMessage() {
+        triggered = true;
+        String opponent = parseOpponent();
         if (opponent == null) return;
 
         MutableComponent clickable = Component.literal("")
@@ -58,22 +74,5 @@ public class Rematch {
 
 
         ChatUtil.delayedSay(clickable);
-    }
-
-    private static String parseOpponent(Minecraft client) {
-        List<String> lines = TextUtil.getOrderedTabList(client);
-        if (lines.isEmpty()) return null;
-
-        String self = Clubtimizer.playerName;
-
-        for (String raw : lines) {
-            String clean = TextUtil.stripFormatting(raw).trim();
-
-            if (!clean.contains(self) && clean.contains("ms")) {
-                String[] parts = clean.split(" ");
-                return parts.length >= 2 ? parts[1] : null;
-            }
-        }
-        return null;
     }
 }
