@@ -5,15 +5,22 @@ import hero.bane.clubtimizer.util.ChatUtil;
 import hero.bane.clubtimizer.util.PingUtil;
 import net.minecraft.world.InteractionHand;
 
+import java.util.Set;
+
 public class PartyMaker {
 
     private static final String NOT_IN_PARTY = "ℹ You are not currently in a party";
     private static final String CREATED_PARTY = "\nCreated party - resend your invite\n";
-    private static final String[] TAB_COMPLETABLES = {"accept","chat","demote","disband","invite","join","kick","leave","maxsize","promote","prune","transfer"};
+    public static final Set<String> PARTY_COMMAND_TAB_COMPLETES =
+            Set.of(
+                    "accept", "chat", "demote", "disband", "invite", "join",
+                    "kick", "leave", "maxsize", "promote", "prune", "transfer"
+            );
     public static String lastPartyCommand = "";
 
     public static void handleMessage(String text) {
         if (!text.contains(NOT_IN_PARTY)) return;
+        if (lastPartyCommand.isEmpty()) return;
 
         rightClickHorn();
 

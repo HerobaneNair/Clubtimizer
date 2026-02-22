@@ -5,11 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "AbstractContainerScreenMixin",
-    "ChatHudMixin",
-    "ClientPlayerInteractionManagerMixin",
-    "ClientPlayNetworkHandlerMixin",
+    "ChatComponentMixin",
+    "ClientPacketListenerMixin",
     "EntityHitboxDebugRendererMixin",
     "EntityRenderDispatcherMixin",
+    "MultiPlayerGameModeMixin",
     "PlayerListEntryMixin",
     "PlayerMenuItemMixin",
     "PlayerTabOverlayMixin",
@@ -28,7 +28,7 @@
   },
   "mixins": [
     "BetterPingDisplayMixin",
-    "ClientConnectionMixin",
+    "ConnectionMixin",
     "EntityMixin"
   ]
 }

@@ -2,11 +2,16 @@ package hero.bane.clubtimizer.mixin;
 
 import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.auto.Tablist;
+import hero.bane.clubtimizer.mixin.accessor.PlayerListHudAccessor;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
+import hero.bane.clubtimizer.util.PlayerUtil;
+import hero.bane.clubtimizer.util.TextUtil;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +28,7 @@ import java.util.List;
 public abstract class PlayerTabOverlayMixin {
 
     @Unique
-    private static final int TAB_MAX_RENDERED = 80;
+    private static final int TAB_MAX_RENDERED = 80; //I feel like there was a mod called wide tab list that increased this but I don't remember
 
     @Shadow
     protected abstract List<PlayerInfo> getPlayerInfos();
@@ -42,8 +47,11 @@ public abstract class PlayerTabOverlayMixin {
             @Nullable Objective objective,
             CallbackInfo ci
     ) {
-        if (!(MCPVPStateChanger.inGame()
-                || MCPVPStateChanger.get() == MCPVPState.SPECTATING)) {
+        if (
+                !(MCPVPStateChanger.inGame() || MCPVPStateChanger.get() == MCPVPState.SPECTATING)
+                || !(FabricLoader.getInstance().isModLoaded("betterpingdisplay") || FabricLoader.getInstance().isModLoaded("numeral-ping"))
+                || showingRegionTab()
+        ) {
             gatedTabSize = 0;
             return;
         }
@@ -74,6 +82,12 @@ public abstract class PlayerTabOverlayMixin {
     ) {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
 
+        //This block just might not work at all but who knows :shrug:
+        assert Clubtimizer.client.level != null;
+        long tick = Clubtimizer.client.level.getGameTime();
+        if (tick == lastTick) return;
+        if (showingRegionTab()) return;
+
         List<PlayerInfo> list = this.getPlayerInfos();
         int index = list.indexOf(entry);
 
@@ -86,5 +100,18 @@ public abstract class PlayerTabOverlayMixin {
         if (latency < 0 || latency == 1 || latency >= 1000) {
             ci.cancel();
         }
+    }
+
+    @Unique
+    private static boolean showingRegionTab() {
+        if (MCPVPStateChanger.inLobby() && PlayerUtil.inSpawnArea()) {
+            PlayerTabOverlay tabList = Clubtimizer.client.gui.getTabList();
+            Component footer = ((PlayerListHudAccessor) tabList).getFooter();
+            if (footer == null) return false;
+
+            String f = TextUtil.toLegacyString(footer);
+            return f.contains("Displaying:") && f.contains("Region");
+        }
+        return false;
     }
 }

@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 import static hero.bane.clubtimizer.util.ChatUtil.say;
 
 public class ClubtimizerCommand {
-    private static final String NEW_AR_RULE_HINT = " from (only inputs, use add to add outputs, separate with |'s) ";
+    private static final String AUTORESPONSE_ARGUMENT = " from (only inputs, use add to add outputs, separate with |'s) ";
 
     public static void register() {
         ClubtimizerConfig.load();
@@ -32,21 +32,32 @@ public class ClubtimizerCommand {
                                 .requires(source ->
                                         Clubtimizer.ip.contains("mcpvp.club") //Seemed like a good add, hopefully doesn't break anything
                                 )
+                                .executes(ClubtimizerCommand::debugger)
                                 .then(buildConfig())
                                 .then(buildRequeue())
                                 .then(buildAutoHush())
+                                .then(buildSpecChat())
                                 .then(buildAutoGG())
                                 .then(buildAutoCope())
                                 .then(buildAutoResponse())
                                 .then(buildLobby())
-                                .then(buildStateGet())
                 )
         );
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildLobby() {
         return ClientCommandManager.literal("lobby")
-                .then(ClientCommandManager.literal("hideplayers")
+                .executes(ctx -> {
+                    var cfg = ClubtimizerConfig.getLobby();
+                    say("Lobby Values: " +
+                            "\n  Turn on hitboxes while connecting: " + cfg.hitboxes +
+                            "\n  Hide Players in lobby: " + cfg.hidePlayers +
+                            "\n  Hide Player Chat in lobby: " + cfg.hideChat +
+                            "\n  Hide Public Parties in lobby: " + cfg.hidePublicParties +
+                            "\n  Hide Warnings in lobby: " + cfg.warning);
+                    return 1;
+                })
+                .then(ClientCommandManager.literal("hidePlayers")
                         .executes(ctx -> toggle(
                                 () -> ClubtimizerConfig.getLobby().hidePlayers,
                                 ClubtimizerConfig::setLobbyHidePlayers,
@@ -97,7 +108,7 @@ public class ClubtimizerCommand {
                                         "MCPVP warnings in lobby"
                                 )))
                 )
-                .then(ClientCommandManager.literal("hidechat")
+                .then(ClientCommandManager.literal("hideChat")
                         .executes(ctx -> toggle(
                                 () -> ClubtimizerConfig.getLobby().hideChat,
                                 ClubtimizerConfig::setLobbyHideChat,
@@ -113,18 +124,24 @@ public class ClubtimizerCommand {
                                         ClubtimizerConfig::setLobbyHideChat,
                                         "Hide Chat in lobby"
                                 )))
+                )
+                .then(ClientCommandManager.literal("hidePublicParties")
+                        .executes(ctx -> toggle(
+                                () -> ClubtimizerConfig.getLobby().hidePublicParties,
+                                ClubtimizerConfig::setLobbyHidePublicParties,
+                                "Hide Public Party Messages in lobby"
+                        ))
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx -> setToggle(true,
+                                        ClubtimizerConfig::setLobbyHidePublicParties,
+                                        "Hide Party Messages in lobby"
+                                )))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx -> setToggle(false,
+                                        ClubtimizerConfig::setLobbyHidePublicParties,
+                                        "Hide Party Messages in lobby"
+                                )))
                 );
-    }
-
-    private static LiteralArgumentBuilder<FabricClientCommandSource> buildStateGet() {
-        return ClientCommandManager.literal("stateGet")
-                .executes(ctx -> {
-                    LocalPlayer player = Clubtimizer.player;
-                    if (player == null || Clubtimizer.client.level == null) return 0;
-                    MCPVPState state = MCPVPStateChanger.get();
-                    say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
-                    return 1;
-                });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildConfig() {
@@ -157,26 +174,71 @@ public class ClubtimizerCommand {
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoHush() {
-        return literalToggleGroupRoot(
-                "autoHush",
-                () -> ClubtimizerConfig.getAutoHush().enabled,
-                ClubtimizerConfig::setAutoHushEnabled,
-                "AutoHush")
-                .then(toggleSub(
-                        "ss",
-                        () -> ClubtimizerConfig.getAutoHush().allowSS,
-                        ClubtimizerConfig::setAutoHushSS,
-                        "SS messages"
+        return ClientCommandManager.literal("autoHush")
+                .executes(ctx -> toggle(
+                        () -> ClubtimizerConfig.getAutoHush().hushed,
+                        ClubtimizerConfig::setAutoHushEnabled,
+                        "AutoHush"
                 ))
-                .then(toggleSub(
-                        "specChat",
-                        () -> ClubtimizerConfig.getAutoHush().specChat,
-                        ClubtimizerConfig::setAutoHushSpecChat,
-                        "Spectator messages"
-                ))
-                .then(ClientCommandManager.literal("setmsg")
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx -> setToggle(true,
+                                ClubtimizerConfig::setAutoHushEnabled,
+                                "AutoHush"
+                        )))
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx -> setToggle(false,
+                                ClubtimizerConfig::setAutoHushEnabled,
+                                "AutoHush"
+                        )))
+                .then(ClientCommandManager.literal("setMsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
+                                .suggests((ctx, b) -> {
+                                    b.suggest(ClubtimizerConfig.getAutoHush().joinMessage);
+                                    b.suggest(".");
+                                    return b.buildFuture();
+                                })
                                 .executes(ClubtimizerCommand::setAutoHushMessage)));
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildSpecChat() {
+        return ClientCommandManager.literal("specChat")
+                .executes(ctx -> {
+                    ClubtimizerConfig.specChatMode current =
+                            ClubtimizerConfig.getSpecChat().mode;
+
+                    ClubtimizerConfig.specChatMode next;
+
+                    switch (current) {
+                        case visible -> next = ClubtimizerConfig.specChatMode.compressed;
+                        case compressed -> next = ClubtimizerConfig.specChatMode.visible;
+                        default -> next = ClubtimizerConfig.specChatMode.hidden;
+                    }
+
+                    ClubtimizerConfig.setSpecChatMode(next);
+                    specChatOut(next);
+                    return 1;
+                })
+                .then(ClientCommandManager.literal("hidden")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.hidden);
+                            specChatOut(ClubtimizerConfig.specChatMode.hidden);
+                            return 1;
+                        }))
+                .then(ClientCommandManager.literal("compressed")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.compressed);
+                            specChatOut(ClubtimizerConfig.specChatMode.compressed);
+                            return 1;
+                        }))
+                .then(ClientCommandManager.literal("visible")
+                        .executes(ctx -> {
+                            ClubtimizerConfig.setSpecChatMode(
+                                    ClubtimizerConfig.specChatMode.visible);
+                            specChatOut(ClubtimizerConfig.specChatMode.visible);
+                            return 1;
+                        }));
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildAutoGG() {
@@ -197,7 +259,7 @@ public class ClubtimizerCommand {
                         ClubtimizerConfig::setAutoGGReactionary,
                         "Reactionary mode"
                 ))
-                .then(ClientCommandManager.literal("setmsg")
+                .then(ClientCommandManager.literal("setMsg")
                         .then(ClientCommandManager.argument("msg", StringArgumentType.greedyString())
                                 .executes(ClubtimizerCommand::setGGMessage)))
                 .then(ClientCommandManager.literal("add")
@@ -205,9 +267,12 @@ public class ClubtimizerCommand {
                                 .executes(ClubtimizerCommand::addGGTrigger)))
                 .then(ClientCommandManager.literal("remove")
                         .then(ClientCommandManager.argument("trigger", StringArgumentType.word())
-                                .suggests((ctx, b) -> {
-                                    ClubtimizerConfig.getAutoGG().triggers.forEach(b::suggest);
-                                    return b.buildFuture();
+                                .suggests((ctx, builder) -> {
+                                    var triggers = ClubtimizerConfig.getAutoGG().triggers;
+                                    if (triggers != null) {
+                                        triggers.forEach(builder::suggest);
+                                    }
+                                    return builder.buildFuture();
                                 })
                                 .executes(ClubtimizerCommand::removeGGTrigger)));
     }
@@ -257,9 +322,9 @@ public class ClubtimizerCommand {
                                 )
                         )
                         .then(ClientCommandManager.literal("new")
-                                .then(ClientCommandManager.argument(NEW_AR_RULE_HINT, StringArgumentType.greedyString())
+                                .then(ClientCommandManager.argument(AUTORESPONSE_ARGUMENT, StringArgumentType.greedyString())
                                         .executes(ctx -> {
-                                            String from = StringArgumentType.getString(ctx, NEW_AR_RULE_HINT);
+                                            String from = StringArgumentType.getString(ctx, AUTORESPONSE_ARGUMENT);
                                             int index = ClubtimizerConfig.getAutoResponse().rules
                                                     .keySet()
                                                     .stream()
@@ -303,10 +368,8 @@ public class ClubtimizerCommand {
                                                     .forEach(i -> b.suggest(Integer.toString(i)));
                                             return b.buildFuture();
                                         })
-
                                         .then(ClientCommandManager.literal("add")
-
-                                                .then(ClientCommandManager.literal("from")
+                                                .then(ClientCommandManager.literal("input")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
                                                                 .executes(ctx -> {
                                                                     int index = Integer.parseInt(
@@ -326,7 +389,7 @@ public class ClubtimizerCommand {
                                                                 })
                                                         )
                                                 )
-                                                .then(ClientCommandManager.literal("to")
+                                                .then(ClientCommandManager.literal("output")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.greedyString())
                                                                 .executes(ctx -> {
                                                                     int index = Integer.parseInt(
@@ -349,7 +412,7 @@ public class ClubtimizerCommand {
                                         )
                                         .then(ClientCommandManager.literal("remove")
 
-                                                .then(ClientCommandManager.literal("key")
+                                                .then(ClientCommandManager.literal("input")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.word())
                                                                 .suggests((ctx, b) -> {
                                                                     int index = Integer.parseInt(
@@ -373,7 +436,7 @@ public class ClubtimizerCommand {
                                                                 })
                                                         )
                                                 )
-                                                .then(ClientCommandManager.literal("value")
+                                                .then(ClientCommandManager.literal("output")
                                                         .then(ClientCommandManager.argument("entry", StringArgumentType.word())
                                                                 .suggests((ctx, b) -> {
                                                                     int index = Integer.parseInt(
@@ -482,5 +545,40 @@ public class ClubtimizerCommand {
         ClubtimizerConfig.removeAutoCopePhrase(msg);
         say("Phrase removed", 0x55FFFF);
         return 1;
+    }
+
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    private static int debugger(CommandContext<FabricClientCommandSource> context) {
+        MCPVPStateChanger.update();
+        LocalPlayer player = Clubtimizer.player;
+        if (player == null || Clubtimizer.client.level == null) return 0;
+
+        MCPVPState state = MCPVPStateChanger.get();
+        say(TextUtil.rainbowGradient("Current MCPVP State: " + state));
+
+        String clubtimizerVersion = FabricLoader.getInstance()
+                .getModContainer("clubtimizer")
+                .get()
+                .getMetadata()
+                .getVersion()
+                .getFriendlyString();
+
+        say("Clubtimizer Version: " + clubtimizerVersion, 0xFFFFFF);
+
+        return 1;
+    }
+
+    private static void specChatOut(ClubtimizerConfig.specChatMode mode) {
+        switch (mode) {
+            case visible:
+                say("Spectator Chat is now Visible", 0x55FF55);
+                break;
+            case compressed:
+                say("Spectator Chat is now Compressed", 0xFFCC55);
+                break;
+            case hidden:
+                say("Spectator Chat is now Hidden", 0x55FF55);
+                break;
+        }
     }
 }

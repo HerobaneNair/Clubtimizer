@@ -35,8 +35,8 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modCompileOnly "maven.modrinth:better-ping-display-fabric:1.21.11-1.2.0"
-    modCompileOnly "maven.modrinth:totemcounter:1.11.1+mc1.21.11"
+    modCompileOnly "maven.modrinth:better-ping-display-fabric:${betterpingdisplay_version}"
+    modCompileOnly "maven.modrinth:totemcounter:${totemcounter_version}"
 }
 
 processResources {

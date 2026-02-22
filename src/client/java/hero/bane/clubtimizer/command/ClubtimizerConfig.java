@@ -1,11 +1,17 @@
 package hero.bane.clubtimizer.command;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import hero.bane.clubtimizer.Clubtimizer;
 import net.fabricmc.loader.api.FabricLoader;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static hero.bane.clubtimizer.util.ChatUtil.say;
 
@@ -25,6 +31,8 @@ public final class ClubtimizerConfig {
         String requeue = "14";
 
         AutoHush autoHush = new AutoHush();
+        SpecChat specChat = new SpecChat();
+
         AutoGG autoGG = new AutoGG();
         AutoCope autoCope = new AutoCope();
         AutoResponse autoResponse = new AutoResponse();
@@ -32,11 +40,19 @@ public final class ClubtimizerConfig {
     }
 
     public static final class AutoHush {
-        public boolean enabled = false;
-        public boolean allowSS = true;
-        public boolean specChat = true;
+        public boolean hushed = false;
         public String joinMessage =
-                "Hi, I have chat disabled, don't want to talk, just want to fight";
+                "Hi, I have chat disabled, don't want to talk, just want to fight [h-club]";
+    }
+
+    public static final class SpecChat {
+        public specChatMode mode = specChatMode.visible;
+    }
+
+    public enum specChatMode {
+        visible,
+        compressed,
+        hidden
     }
 
     public static final class AutoGG {
@@ -66,6 +82,7 @@ public final class ClubtimizerConfig {
     public static final class Lobby {
         public boolean hidePlayers = false;
         public boolean hideChat = false;
+        public boolean hidePublicParties = false;
         public boolean hitboxes = false;
         public boolean warning = true;
     }
@@ -129,6 +146,19 @@ public final class ClubtimizerConfig {
             rewrite = true;
         }
 
+        if (data.autoHush == null) {
+            data.autoHush = new AutoHush();
+            rewrite = true;
+        }
+        if (data.specChat == null) {
+            data.specChat = new SpecChat();
+            rewrite = true;
+        }
+        if (data.specChat.mode == null) {
+            data.specChat.mode = specChatMode.hidden;
+            rewrite = true;
+        }
+
         if (data.autoGG.triggers == null || data.autoGG.triggers.isEmpty()) {
             say("AutoGG triggers missing or empty. Restoring defaults.", 0xFF0000);
 
@@ -186,17 +216,18 @@ public final class ClubtimizerConfig {
 
     public static Lobby getLobby() { return data.lobby; }
 
+    public static AutoHush getAutoHush() { return data.autoHush; }
+    public static SpecChat getSpecChat() { return data.specChat; }
+
     public static void setLobbyHidePlayers(boolean b) { data.lobby.hidePlayers = b; save(); }
     public static void setLobbyHideChat(boolean b) { data.lobby.hideChat = b; save(); }
+    public static void setLobbyHidePublicParties(boolean b) { data.lobby.hidePublicParties = b; save(); }
     public static void setLobbyHitboxes(boolean b) { data.lobby.hitboxes = b; save(); }
     public static void setLobbyWarning(boolean b) { data.lobby.warning = b; save(); }
 
-    public static AutoHush getAutoHush() { return data.autoHush; }
-
-    public static void setAutoHushEnabled(boolean b) { data.autoHush.enabled = b; save(); }
-    public static void setAutoHushSS(boolean b) { data.autoHush.allowSS = b; save(); }
-    public static void setAutoHushSpecChat(boolean b) { data.autoHush.specChat = b; save(); }
+    public static void setAutoHushEnabled(boolean b) { data.autoHush.hushed = b; save(); }
     public static void setAutoHushMessage(String s) { data.autoHush.joinMessage = s; save(); }
+    public static void setSpecChatMode(specChatMode m) { data.specChat.mode = m; save(); }
 
     public static AutoGG getAutoGG() { return data.autoGG; }
 

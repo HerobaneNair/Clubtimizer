@@ -3,16 +3,15 @@ package hero.bane.clubtimizer.mixin;
 import hero.bane.clubtimizer.action.Cope;
 import hero.bane.clubtimizer.action.GG;
 import hero.bane.clubtimizer.action.Response;
-import hero.bane.clubtimizer.auto.PartyMaker;
-import hero.bane.clubtimizer.auto.Rematch;
-import hero.bane.clubtimizer.auto.Spectator;
-import hero.bane.clubtimizer.auto.Totem;
+import hero.bane.clubtimizer.auto.*;
+import hero.bane.clubtimizer.command.ClubtimizerConfig;
 import hero.bane.clubtimizer.state.MCPVPState;
 import hero.bane.clubtimizer.state.MCPVPStateChanger;
 import hero.bane.clubtimizer.util.PlayerUtil;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(ClientPacketListener.class)
-public class ClientPlayNetworkHandlerMixin {
+public class ClientPacketListenerMixin {
 
     @Inject(method = "handleSystemChat", at = @At("HEAD"))
     private void club$onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
@@ -57,13 +56,38 @@ public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "sendCommand", at = @At("HEAD"))
     private void club$resendPartyCommand(String command, CallbackInfo ci) {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
-        if (command.startsWith("party")) {
+        if (!command.startsWith("party ")) return;
+
+        int firstSpace = command.indexOf(' ');
+        if (firstSpace == -1 || firstSpace == command.length() - 1) return;
+
+        String sub = command.substring(firstSpace + 1);
+
+        if (!PartyMaker.PARTY_COMMAND_TAB_COMPLETES.contains(sub)) {
             PartyMaker.lastPartyCommand = "/" + command;
+        } else {
+            PartyMaker.lastPartyCommand = "";
+        }
+    }
+
+    @Inject(method = "sendChat", at = @At("HEAD"))
+    private void club$checkManualGG(String message, CallbackInfo ci) {
+        if (!MCPVPStateChanger.inGame()) return;
+        var cfg = ClubtimizerConfig.getAutoGG();
+        if (!cfg.enabled || !cfg.reactionary) return;
+        if (GG.isTrigger(message)) {
+            GG.setReactionWindow();
         }
     }
 
     @Inject(method = "handleRemoveEntities", at = @At("HEAD"))
     private void club$specDeath(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
         Spectator.onEntitiesDestroyed(packet.getEntityIds());
+    }
+
+    @Inject(method = "handleContainerContent", at = @At("TAIL"))
+    private void club$containerChange(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        if (!MCPVPStateChanger.inLobby()) return;
+        Requeue.containerChanged(packet.containerId());
     }
 }
