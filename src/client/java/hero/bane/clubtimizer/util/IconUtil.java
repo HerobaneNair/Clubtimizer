@@ -20,7 +20,7 @@ public class IconUtil {
             "🗡", '\uE067'
     );
 
-    private static final String[] VALID_SUFFIXES = {" H", " L"};
+    private static final String[] VALID_SUFFIXES = {" (R) H"," (R) L"," H", " L"};
 
     public static Component remapIcons(Component original) {
         MutableComponent out = Component.empty();
