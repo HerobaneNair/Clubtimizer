@@ -210,8 +210,8 @@ public class ClubtimizerCommand {
 
                     switch (current) {
                         case visible -> next = ClubtimizerConfig.specChatMode.compressed;
-                        case compressed -> next = ClubtimizerConfig.specChatMode.visible;
-                        default -> next = ClubtimizerConfig.specChatMode.hidden;
+                        case compressed -> next = ClubtimizerConfig.specChatMode.hidden;
+                        default -> next = ClubtimizerConfig.specChatMode.visible;
                     }
 
                     ClubtimizerConfig.setSpecChatMode(next);
