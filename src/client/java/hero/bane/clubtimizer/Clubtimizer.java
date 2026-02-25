@@ -1,6 +1,5 @@
 package hero.bane.clubtimizer;
 
-import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.auto.Totem;
@@ -15,7 +14,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +53,9 @@ public class Clubtimizer implements ClientModInitializer {
             if (minecraft.player != null && minecraft.level != null) {
                 long t = minecraft.level.getGameTime();
                 if (MCPVPStateChanger.get() != MCPVPState.NONE) {
-                    if (t % 5 == 0) MCPVPStateChanger.update();
-                    handleBlindness();
+                    if (t % 5 == 0) {
+                        MCPVPStateChanger.update();
+                    }
                 } else {
                     if (t % 20 == 0) MCPVPStateChanger.update();
                     hasBlindness = false;
@@ -85,16 +84,6 @@ public class Clubtimizer implements ClientModInitializer {
             ip = "_sp";
         } else {
             ip = "_";
-        }
-    }
-
-    private static void handleBlindness() {
-        hasBlindness = player.hasEffect(MobEffects.BLINDNESS);
-        if (MCPVPStateChanger.inGame()) {
-            Totem.resetPops();
-            if (MCPVPStateChanger.get() == MCPVPState.BLUE || MCPVPStateChanger.get() == MCPVPState.RED) {
-                Rematch.sendRematchMessage();
-            }
         }
     }
 }
