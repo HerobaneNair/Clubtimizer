@@ -1,6 +1,5 @@
 package hero.bane.clubtimizer;
 
-import hero.bane.clubtimizer.auto.Rematch;
 import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
 import hero.bane.clubtimizer.auto.Totem;
@@ -92,9 +91,6 @@ public class Clubtimizer implements ClientModInitializer {
         hasBlindness = player.hasEffect(MobEffects.BLINDNESS);
         if (MCPVPStateChanger.inGame()) {
             Totem.resetPops();
-            if (MCPVPStateChanger.get() == MCPVPState.BLUE || MCPVPStateChanger.get() == MCPVPState.RED) {
-                Rematch.sendRematchMessage();
-            }
         }
     }
 }

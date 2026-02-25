@@ -109,7 +109,7 @@ public class Hush {
         MutableComponent base = (MutableComponent) TextUtil.fromLegacy(prefix);
 
         String hoverText = TextUtil.stripFormatting(afterArrow).trim();
-        int len = afterArrow.length();
+        int len = afterArrow.trim().length();
         String maskColor = playerChat ? "§7§m" : "§8§m";
         MutableComponent hiddenPart = (MutableComponent) TextUtil.fromLegacy(maskColor + " ".repeat(len));
 
