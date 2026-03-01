@@ -2,6 +2,7 @@ package hero.bane.clubtimizer.command;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import hero.bane.clubtimizer.Clubtimizer;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -46,13 +47,13 @@ public final class ClubtimizerConfig {
     }
 
     public static final class SpecChat {
-        public specChatMode mode = specChatMode.visible;
+        public specChatMode mode = specChatMode.VISIBLE;
     }
 
     public enum specChatMode {
-        visible,
-        compressed,
-        hidden
+        VISIBLE,
+        COMPRESSED,
+        HIDDEN
     }
 
     public static final class AutoGG {
@@ -61,7 +62,7 @@ public final class ClubtimizerConfig {
         public boolean roundEnabled = true;
         public String message = "gg";
         public List<String> triggers = new ArrayList<>(List.of(
-                "g","gg","ggs","ggg","gs","gggg","ggwp","wp"
+                "g", "gg", "ggs", "ggg", "gs", "gggg", "ggwp", "wp"
         ));
     }
 
@@ -81,10 +82,16 @@ public final class ClubtimizerConfig {
 
     public static final class Lobby {
         public boolean hidePlayers = false;
-        public boolean hideChat = false;
+        public hideChatMode hideChat = hideChatMode.NONE;
         public boolean hidePublicParties = false;
         public boolean hitboxes = false;
         public boolean warning = true;
+    }
+
+    public enum hideChatMode {
+        ALL,
+        NORANK,
+        NONE;
     }
 
     public static class AutoResponseRule {
@@ -101,7 +108,40 @@ public final class ClubtimizerConfig {
 
         try (FileReader reader = new FileReader(file)) {
 
-            Config loaded = gson.fromJson(reader, Config.class);
+            //I tried so much stuff to get this to work in validateAndMigrate(), but it crashes before so ¯\_(ツ)_/¯
+            var json = JsonParser.parseReader(reader).getAsJsonObject();
+
+            if (json.has("lobby")) {
+                var lobbyObj = json.getAsJsonObject("lobby");
+
+                if (lobbyObj.has("hideChat") && lobbyObj.get("hideChat").isJsonPrimitive()) {
+                    var jsonPrimitive = lobbyObj.getAsJsonPrimitive("hideChat");
+                    say("HideChat seems to be bugged in your config, resetting", 0xFF0000);
+                    if (jsonPrimitive.isBoolean()) {
+                        lobbyObj.addProperty(
+                                "hideChat",
+                                "NONE"
+                        );
+                    }
+                }
+            }
+
+            if (json.has("specChat")) {
+                var specObj = json.getAsJsonObject("specChat");
+
+                if (specObj.has("mode") && specObj.get("mode").isJsonPrimitive()) {
+                    var jsonPrimitive = specObj.getAsJsonPrimitive("mode");
+                    say("specChat seems to be bugged in your config, resetting", 0xFF0000);
+                    if (jsonPrimitive.isBoolean()) {
+                        specObj.addProperty(
+                                "mode",
+                                "VISIBLE"
+                        );
+                    }
+                }
+            }
+
+            Config loaded = gson.fromJson(json, Config.class);
 
             if (loaded == null) {
                 say("Config malformed. Resetting.", 0xFF0000);
@@ -110,7 +150,6 @@ public final class ClubtimizerConfig {
             }
 
             data = loaded;
-
             validateAndMigrate();
 
         } catch (Exception e) {
@@ -146,38 +185,47 @@ public final class ClubtimizerConfig {
             rewrite = true;
         }
 
-        if (data.autoHush == null) {
-            data.autoHush = new AutoHush();
+        if (data.lobby == null) {
+            data.lobby = new Lobby();
             rewrite = true;
         }
+
+        if (data.lobby.hideChat == null) {
+            data.lobby.hideChat = hideChatMode.NONE;
+            rewrite = true;
+        }
+
         if (data.specChat == null) {
             data.specChat = new SpecChat();
             rewrite = true;
         }
+
         if (data.specChat.mode == null) {
-            data.specChat.mode = specChatMode.hidden;
+            data.specChat.mode = specChatMode.HIDDEN;
+            rewrite = true;
+        }
+
+        if (data.autoHush == null) {
+            data.autoHush = new AutoHush();
             rewrite = true;
         }
 
         if (data.autoGG.triggers == null || data.autoGG.triggers.isEmpty()) {
             say("AutoGG triggers missing or empty. Restoring defaults.", 0xFF0000);
-
             data.autoGG.triggers = new ArrayList<>(List.of(
-                    "g","gg","ggs","ggg","gs","gggg","ggwp","wp"
+                    "g", "gg", "ggs", "ggg", "gs", "gggg", "ggwp", "wp"
             ));
             rewrite = true;
         }
 
         if (data.autoCope.phrases == null) {
             say("AutoCope phrases missing. Restoring empty list.", 0xFF0000);
-
             data.autoCope.phrases = new ArrayList<>();
             rewrite = true;
         }
 
         if (data.autoResponse.rules == null) {
             say("AutoResponse rules missing. Restoring empty rule set.", 0xFF0000);
-
             data.autoResponse.rules = new LinkedHashMap<>();
             rewrite = true;
         }
@@ -214,27 +262,81 @@ public final class ClubtimizerConfig {
         save();
     }
 
-    public static Lobby getLobby() { return data.lobby; }
+    public static Lobby getLobby() {
+        return data.lobby;
+    }
 
-    public static AutoHush getAutoHush() { return data.autoHush; }
-    public static SpecChat getSpecChat() { return data.specChat; }
+    public static AutoHush getAutoHush() {
+        return data.autoHush;
+    }
 
-    public static void setLobbyHidePlayers(boolean b) { data.lobby.hidePlayers = b; save(); }
-    public static void setLobbyHideChat(boolean b) { data.lobby.hideChat = b; save(); }
-    public static void setLobbyHidePublicParties(boolean b) { data.lobby.hidePublicParties = b; save(); }
-    public static void setLobbyHitboxes(boolean b) { data.lobby.hitboxes = b; save(); }
-    public static void setLobbyWarning(boolean b) { data.lobby.warning = b; save(); }
+    public static SpecChat getSpecChat() {
+        return data.specChat;
+    }
 
-    public static void setAutoHushEnabled(boolean b) { data.autoHush.hushed = b; save(); }
-    public static void setAutoHushMessage(String s) { data.autoHush.joinMessage = s; save(); }
-    public static void setSpecChatMode(specChatMode m) { data.specChat.mode = m; save(); }
+    public static void setLobbyHidePlayers(boolean b) {
+        data.lobby.hidePlayers = b;
+        save();
+    }
 
-    public static AutoGG getAutoGG() { return data.autoGG; }
+    public static void setLobbyHideChat(hideChatMode mode) {
+        data.lobby.hideChat = mode == null ? hideChatMode.NONE : mode;
+        save();
+    }
 
-    public static void setAutoGGEnabled(boolean b) { data.autoGG.enabled = b; save(); }
-    public static void setAutoGGReactionary(boolean b) { data.autoGG.reactionary = b; save(); }
-    public static void setAutoGGRound(boolean b) { data.autoGG.roundEnabled = b; save(); }
-    public static void setAutoGGMessage(String s) { data.autoGG.message = s; save(); }
+    public static void setLobbyHidePublicParties(boolean b) {
+        data.lobby.hidePublicParties = b;
+        save();
+    }
+
+    public static void setLobbyHitboxes(boolean b) {
+        data.lobby.hitboxes = b;
+        save();
+    }
+
+    public static void setLobbyWarning(boolean b) {
+        data.lobby.warning = b;
+        save();
+    }
+
+    public static void setAutoHushEnabled(boolean b) {
+        data.autoHush.hushed = b;
+        save();
+    }
+
+    public static void setAutoHushMessage(String s) {
+        data.autoHush.joinMessage = s;
+        save();
+    }
+
+    public static void setSpecChatMode(specChatMode m) {
+        data.specChat.mode = m;
+        save();
+    }
+
+    public static AutoGG getAutoGG() {
+        return data.autoGG;
+    }
+
+    public static void setAutoGGEnabled(boolean b) {
+        data.autoGG.enabled = b;
+        save();
+    }
+
+    public static void setAutoGGReactionary(boolean b) {
+        data.autoGG.reactionary = b;
+        save();
+    }
+
+    public static void setAutoGGRound(boolean b) {
+        data.autoGG.roundEnabled = b;
+        save();
+    }
+
+    public static void setAutoGGMessage(String s) {
+        data.autoGG.message = s;
+        save();
+    }
 
     public static void addAutoGGTrigger(String s) {
         data.autoGG.triggers.add(s.toLowerCase());
@@ -246,9 +348,14 @@ public final class ClubtimizerConfig {
         save();
     }
 
-    public static AutoCope getAutoCope() { return data.autoCope; }
+    public static AutoCope getAutoCope() {
+        return data.autoCope;
+    }
 
-    public static void setAutoCopeEnabled(boolean b) { data.autoCope.enabled = b; save(); }
+    public static void setAutoCopeEnabled(boolean b) {
+        data.autoCope.enabled = b;
+        save();
+    }
 
     public static void addAutoCopePhrase(String s) {
         data.autoCope.phrases.add(s);
@@ -260,7 +367,9 @@ public final class ClubtimizerConfig {
         save();
     }
 
-    public static AutoResponse getAutoResponse() { return data.autoResponse; }
+    public static AutoResponse getAutoResponse() {
+        return data.autoResponse;
+    }
 
     public static void setAutoResponseEnabled(boolean b) {
         data.autoResponse.enabled = b;

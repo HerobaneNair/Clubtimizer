@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Tablist {
+    
+    public static boolean isABetterPingModLoaded = false;
 
     private static String removeMs(String s) {
         if (!s.contains("ms")) return s;

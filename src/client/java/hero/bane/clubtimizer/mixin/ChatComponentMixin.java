@@ -33,15 +33,18 @@ public abstract class ChatComponentMixin {
         if (MCPVPStateChanger.inLobby() || PlayerUtil.inSpawnArea()) {
             String noFormatting = message.getString();
 
-            if (ClubtimizerConfig.getLobby().hideChat) {
+            if (ClubtimizerConfig.getLobby().hideChat != ClubtimizerConfig.hideChatMode.NONE) {
                 int arrowIndex = noFormatting.indexOf('»');
 
                 if (arrowIndex >= 0) {
                     String before = noFormatting.substring(0, arrowIndex).strip();
                     String name = club$extractName(before);
 
-                    if (!PlayerUtil.isSelfOrFriend(name)) ci.cancel();
-                    return;
+                    //I think it's a clever boolean logic so, if it's all it won't check the isNoRank thing, but if it's noRank it will
+                    if (ClubtimizerConfig.getLobby().hideChat != ClubtimizerConfig.hideChatMode.NORANK || TextUtil.isNoRankMessage(message)) {
+                        if (!PlayerUtil.isSelfOrFriend(name)) ci.cancel();
+                        return;
+                    }
                 }
             }
 
@@ -59,7 +62,7 @@ public abstract class ChatComponentMixin {
         }
 
         if (MCPVPStateChanger.inGame()
-                && ClubtimizerConfig.getSpecChat().mode == ClubtimizerConfig.specChatMode.hidden) {
+                && ClubtimizerConfig.getSpecChat().mode == ClubtimizerConfig.specChatMode.HIDDEN) {
             if (TextUtil.toLegacyString(message).contains("§#7a7a7a »") || message.getString().startsWith("\uD83D\uDC41")) {
                 ci.cancel();
             }

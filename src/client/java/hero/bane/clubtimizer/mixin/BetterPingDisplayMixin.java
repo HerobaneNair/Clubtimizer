@@ -28,6 +28,7 @@ public abstract class BetterPingDisplayMixin {
             CallbackInfo ci
     ) {
         if (MCPVPStateChanger.get() == MCPVPState.NONE) return;
+        if (!(MCPVPStateChanger.atGame())) ci.cancel();
 
         int parsedPing = -1;
         if (entry.getTabListDisplayName() != null) {

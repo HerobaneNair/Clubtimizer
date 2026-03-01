@@ -2,6 +2,7 @@ package hero.bane.clubtimizer;
 
 import hero.bane.clubtimizer.auto.Requeue;
 import hero.bane.clubtimizer.auto.Spectator;
+import hero.bane.clubtimizer.auto.Tablist;
 import hero.bane.clubtimizer.auto.Totem;
 import hero.bane.clubtimizer.command.ClubtimizerCommand;
 import hero.bane.clubtimizer.command.ClubtimizerConfig;
@@ -28,7 +29,6 @@ public class Clubtimizer implements ClientModInitializer {
     public static Minecraft client;
     public static LocalPlayer player;
     public static String playerName = "";
-    public static boolean hasBlindness = false;
 
     @Override
     public void onInitializeClient() {
@@ -58,11 +58,11 @@ public class Clubtimizer implements ClientModInitializer {
                     }
                 } else {
                     if (t % 20 == 0) MCPVPStateChanger.update();
-                    hasBlindness = false;
                 }
             }
         });
         Totem.totemCounterLoaded = FabricLoader.getInstance().isModLoaded("totemcounter");
+        Tablist.isABetterPingModLoaded = FabricLoader.getInstance().isModLoaded("betterpingdisplay") || FabricLoader.getInstance().isModLoaded("numeral-ping");
     }
 
     private static void updateIp(Minecraft minecraft) {

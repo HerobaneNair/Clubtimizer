@@ -109,21 +109,43 @@ public class ClubtimizerCommand {
                                 )))
                 )
                 .then(ClientCommandManager.literal("hideChat")
-                        .executes(ctx -> toggle(
-                                () -> ClubtimizerConfig.getLobby().hideChat,
-                                ClubtimizerConfig::setLobbyHideChat,
-                                "Hide Chat in lobby"
-                        ))
-                        .then(ClientCommandManager.literal("on")
-                                .executes(ctx -> setToggle(true,
-                                        ClubtimizerConfig::setLobbyHideChat,
-                                        "Hide Chat in lobby"
-                                )))
-                        .then(ClientCommandManager.literal("off")
-                                .executes(ctx -> setToggle(false,
-                                        ClubtimizerConfig::setLobbyHideChat,
-                                        "Hide Chat in lobby"
-                                )))
+                        .executes(ctx -> {
+                            ClubtimizerConfig.hideChatMode current =
+                                    ClubtimizerConfig.getLobby().hideChat;
+
+                            ClubtimizerConfig.hideChatMode next;
+
+                            switch (current) {
+                                case NONE -> next = ClubtimizerConfig.hideChatMode.NORANK;
+                                case NORANK -> next = ClubtimizerConfig.hideChatMode.ALL;
+                                default -> next = ClubtimizerConfig.hideChatMode.NONE;
+                            }
+
+                            ClubtimizerConfig.setLobbyHideChat(next);
+                            say("Lobby hideChat set to " + next, 0x55FFFF);
+                            return 1;
+                        })
+                        .then(ClientCommandManager.literal("none")
+                                .executes(ctx -> {
+                                    ClubtimizerConfig.setLobbyHideChat(
+                                            ClubtimizerConfig.hideChatMode.NONE);
+                                    say("Lobby hideChat set to None", 0x55FF55);
+                                    return 1;
+                                }))
+                        .then(ClientCommandManager.literal("noRank")
+                                .executes(ctx -> {
+                                    ClubtimizerConfig.setLobbyHideChat(
+                                            ClubtimizerConfig.hideChatMode.NORANK);
+                                    say("Lobby hideChat set to hideNorank", 0xFFCC55);
+                                    return 1;
+                                }))
+                        .then(ClientCommandManager.literal("all")
+                                .executes(ctx -> {
+                                    ClubtimizerConfig.setLobbyHideChat(
+                                            ClubtimizerConfig.hideChatMode.ALL);
+                                    say("Lobby hideChat set to hideAll", 0xFF5555);
+                                    return 1;
+                                }))
                 )
                 .then(ClientCommandManager.literal("hidePublicParties")
                         .executes(ctx -> toggle(
@@ -209,9 +231,9 @@ public class ClubtimizerCommand {
                     ClubtimizerConfig.specChatMode next;
 
                     switch (current) {
-                        case visible -> next = ClubtimizerConfig.specChatMode.compressed;
-                        case compressed -> next = ClubtimizerConfig.specChatMode.hidden;
-                        default -> next = ClubtimizerConfig.specChatMode.visible;
+                        case VISIBLE -> next = ClubtimizerConfig.specChatMode.COMPRESSED;
+                        case COMPRESSED -> next = ClubtimizerConfig.specChatMode.HIDDEN;
+                        default -> next = ClubtimizerConfig.specChatMode.VISIBLE;
                     }
 
                     ClubtimizerConfig.setSpecChatMode(next);
@@ -221,22 +243,22 @@ public class ClubtimizerCommand {
                 .then(ClientCommandManager.literal("hidden")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.hidden);
-                            specChatOut(ClubtimizerConfig.specChatMode.hidden);
+                                    ClubtimizerConfig.specChatMode.HIDDEN);
+                            specChatOut(ClubtimizerConfig.specChatMode.HIDDEN);
                             return 1;
                         }))
                 .then(ClientCommandManager.literal("compressed")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.compressed);
-                            specChatOut(ClubtimizerConfig.specChatMode.compressed);
+                                    ClubtimizerConfig.specChatMode.COMPRESSED);
+                            specChatOut(ClubtimizerConfig.specChatMode.COMPRESSED);
                             return 1;
                         }))
                 .then(ClientCommandManager.literal("visible")
                         .executes(ctx -> {
                             ClubtimizerConfig.setSpecChatMode(
-                                    ClubtimizerConfig.specChatMode.visible);
-                            specChatOut(ClubtimizerConfig.specChatMode.visible);
+                                    ClubtimizerConfig.specChatMode.VISIBLE);
+                            specChatOut(ClubtimizerConfig.specChatMode.VISIBLE);
                             return 1;
                         }));
     }
@@ -570,13 +592,13 @@ public class ClubtimizerCommand {
 
     private static void specChatOut(ClubtimizerConfig.specChatMode mode) {
         switch (mode) {
-            case visible:
+            case VISIBLE:
                 say("Spectator Chat is now Visible", 0x55FF55);
                 break;
-            case compressed:
+            case COMPRESSED:
                 say("Spectator Chat is now Compressed", 0xFFCC55);
                 break;
-            case hidden:
+            case HIDDEN:
                 say("Spectator Chat is now Hidden", 0x55FF55);
                 break;
         }

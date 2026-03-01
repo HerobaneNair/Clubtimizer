@@ -1,6 +1,5 @@
 package hero.bane.clubtimizer.util;
 
-import hero.bane.clubtimizer.Clubtimizer;
 import hero.bane.clubtimizer.mixin.accessor.InGameHudAccessor;
 import hero.bane.clubtimizer.mixin.accessor.PlayerListHudAccessor;
 import net.minecraft.ChatFormatting;
@@ -10,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.world.scores.*;
 
 import java.util.*;
@@ -264,5 +264,19 @@ public class TextUtil {
         if (text.contains("⚔ Match Complete")) return true;
         if (!roundCheck) return false;
         return text.contains("won the round") && !text.contains("»");
+    }
+
+    public static boolean isNoRankMessage(Component component) {
+        List<Component> siblings = component.getSiblings();
+        if (siblings.isEmpty()) return false;
+
+        Component first = siblings.getFirst();
+
+        if (!(first.getContents() instanceof PlainTextContents)) return false;
+        Style style = first.getStyle();
+        if (style.getColor() == null) return false;
+
+        //Should still flag when style={color=white} [It looks like it does]
+        return style.getColor().getValue() == 0xFFFFFF;
     }
 }

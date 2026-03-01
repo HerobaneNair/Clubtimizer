@@ -217,11 +217,14 @@ public class MCPVPStateChanger {
         return inGame;
     }
 
+    public static boolean atGame() {
+        return inGame || inSpec();
+    }
+
     public static boolean inLobby() {
         return inLobby;
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean inSpec() {
         return inSpec;
     }

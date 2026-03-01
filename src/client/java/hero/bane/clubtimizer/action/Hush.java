@@ -15,11 +15,11 @@ public class Hush {
     public static boolean allowLobbyJoin = false;
 
     public static Component replaceMessage(Component msg) {
-        if (!MCPVPStateChanger.inGame() || PlayerUtil.inSpawnArea()) return msg;
+        if (!MCPVPStateChanger.atGame() || PlayerUtil.inSpawnArea()) return msg;
 
         var cfg1 = ClubtimizerConfig.getAutoHush();
         var cfg2 = ClubtimizerConfig.getSpecChat();
-        if (!cfg1.hushed && (cfg2.mode == ClubtimizerConfig.specChatMode.hidden)) return msg;
+        if (!cfg1.hushed && (cfg2.mode == ClubtimizerConfig.specChatMode.HIDDEN)) return msg;
 
         String legacy = TextUtil.toLegacyString(msg);
         int arrowIndex = legacy.indexOf('»');
@@ -45,9 +45,10 @@ public class Hush {
 
         if (lower.contains("§#7a7a7a »")) {
             return switch (cfg2.mode) {
-                case ClubtimizerConfig.specChatMode.visible -> (cfg1.hushed ? buildHidden(beforeArrow, afterArrow, false) : msg);
-                case ClubtimizerConfig.specChatMode.compressed -> buildHidden(beforeArrow, afterArrow, false);
-                case ClubtimizerConfig.specChatMode.hidden -> Component.literal("\uD83D\uDC41");
+                case ClubtimizerConfig.specChatMode.VISIBLE ->
+                        (cfg1.hushed ? buildHidden(beforeArrow, afterArrow, false) : msg);
+                case ClubtimizerConfig.specChatMode.COMPRESSED -> buildHidden(beforeArrow, afterArrow, false);
+                case ClubtimizerConfig.specChatMode.HIDDEN -> Component.literal("\uD83D\uDC41");
             };
         }
 

@@ -12,7 +12,7 @@ public class Totem {
     public static boolean totemCounterLoaded = false;
 
     public static void handleMessage(String text) {
-        if (!totemCounterLoaded || !(MCPVPStateChanger.inGame() || MCPVPStateChanger.get() == MCPVPState.SPECTATING))
+        if (!totemCounterLoaded || !(MCPVPStateChanger.atGame()))
             return;
 
         ClientLevel clientLevel = Clubtimizer.client.level;
@@ -27,6 +27,7 @@ public class Totem {
     }
 
     public static void resetPops() {
+        if (!totemCounterLoaded) return;
         TotemCounterAccessor.getPops().clear();
         reactionWindowEnd = 0;
     }
